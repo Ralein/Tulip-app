@@ -73,17 +73,46 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Dynamic custom vector tulip showing growth progress per onboarding slide!
-                    SizedBox(
-                      height: 180,
-                      width: 120,
-                      child: CustomPaint(
-                        painter: TulipPainter(
-                          tulipColor: page.tulipColor,
-                          growthProgress: page.growthProgress,
-                          bloomFactor: page.bloomFactor,
-                          swayAngle: 0.04,
-                        ),
+                    // Dynamic visual showcase: High-fidelity onboarding GIF on Page 1, Vector Tulip painter on others!
+                    Container(
+                      height: 220,
+                      width: 280,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(AppDimensions.radius24),
+                        boxShadow: [
+                          BoxShadow(
+                            color: page.tulipColor.withOpacity(0.25),
+                            blurRadius: 20,
+                            spreadRadius: 2,
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(AppDimensions.radius24),
+                        child: index == 0
+                            ? Image.asset(
+                                'assets/images/garden_onboarding.gif',
+                                fit: BoxFit.cover,
+                              )
+                            : Container(
+                                decoration: BoxDecoration(
+                                  color: isDark ? Colors.white.withOpacity(0.03) : Colors.black.withOpacity(0.02),
+                                  border: Border.all(
+                                    color: isDark ? Colors.white12 : Colors.black12,
+                                    width: 1.5,
+                                  ),
+                                  borderRadius: BorderRadius.circular(AppDimensions.radius24),
+                                ),
+                                padding: const EdgeInsets.all(AppDimensions.space24),
+                                child: CustomPaint(
+                                  painter: TulipPainter(
+                                    tulipColor: page.tulipColor,
+                                    growthProgress: page.growthProgress,
+                                    bloomFactor: page.bloomFactor,
+                                    swayAngle: 0.04,
+                                  ),
+                                ),
+                              ),
                       ),
                     ),
                     const SizedBox(height: AppDimensions.space32),

@@ -1,6 +1,9 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import '../../features/garden/presentation/providers/garden_state_provider.dart';
+
+enum ParticleType { petal, rain, firefly, windyLeaf }
 
 class PetalParticle {
   double x;
@@ -12,6 +15,7 @@ class PetalParticle {
   double spinSpeed;
   double opacity;
   Color color;
+  ParticleType type;
 
   PetalParticle({
     required this.x,
@@ -23,17 +27,20 @@ class PetalParticle {
     required this.spinSpeed,
     required this.opacity,
     required this.color,
+    required this.type,
   });
 }
 
 class ParticleSystemWidget extends StatefulWidget {
   final Color particleColor;
   final int maxParticles;
+  final GardenWeather weather;
 
   const ParticleSystemWidget({
     super.key,
     this.particleColor = const Color(0xFFFFBBD0), // Tulip Pink Petal
-    this.maxParticles = 25,
+    this.maxParticles = 35,
+    this.weather = GardenWeather.sunny,
   });
 
   @override
@@ -59,24 +66,61 @@ class _ParticleSystemWidgetState extends State<ParticleSystemWidget>
     super.dispose();
   }
 
+  @override
+  void didUpdateWidget(covariant ParticleSystemWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // If the weather changed, gently clear and transition active particles!
+    if (oldWidget.weather != widget.weather) {
+      _particles.clear();
+      if (_screenSize != Size.zero) {
+        for (int i = 0; i < widget.maxParticles ~/ 2; i++) {
+          _spawnParticle(atTop: false);
+        }
+      }
+    }
+  }
+
   void _onTick(Duration elapsed) {
     if (_screenSize == Size.zero) return;
 
     setState(() {
       // Spawn particles if needed
-      if (_particles.length < widget.maxParticles && _random.nextDouble() < 0.05) {
+      if (_particles.length < widget.maxParticles && _random.nextDouble() < 0.12) {
         _spawnParticle(atTop: true);
       }
 
       // Update particle positions
       for (int i = _particles.length - 1; i >= 0; i--) {
         final p = _particles[i];
-        p.y += p.speedY;
-        p.x += p.speedX + math.sin(p.y / 30) * 0.5; // Natural swaying
-        p.angle += p.spinSpeed;
+        
+        // Dynamic animation properties based on particle/weather types
+        if (p.type == ParticleType.rain) {
+          p.y += p.speedY;
+          p.x += p.speedX;
+        } else if (p.type == ParticleType.firefly) {
+          // Floating UP gently, with sinewave horizontal sways
+          p.y += p.speedY;
+          p.x += p.speedX + math.sin(p.y / 20) * 0.4;
+          // Flickering opacity
+          p.opacity = math.max(0.1, math.min(1.0, p.opacity + (_random.nextDouble() * 0.1 - 0.05)));
+        } else if (p.type == ParticleType.windyLeaf) {
+          // Rapid diagonal wind drift
+          p.y += p.speedY;
+          p.x += p.speedX + math.sin(p.y / 15) * 1.5;
+          p.angle += p.spinSpeed;
+        } else {
+          // Standard sunny drifting petals
+          p.y += p.speedY;
+          p.x += p.speedX + math.sin(p.y / 30) * 0.5;
+          p.angle += p.spinSpeed;
+        }
 
-        // Reset if offscreen
-        if (p.y > _screenSize.height + 20 || p.x < -20 || p.x > _screenSize.width + 20) {
+        // Reset or remove if offscreen/out of bounds
+        final isOffscreen = p.type == ParticleType.firefly
+            ? (p.y < -20 || p.x < -20 || p.x > _screenSize.width + 20)
+            : (p.y > _screenSize.height + 20 || p.x < -20 || p.x > _screenSize.width + 20);
+
+        if (isOffscreen) {
           if (_particles.length > widget.maxParticles) {
             _particles.removeAt(i);
           } else {
@@ -89,38 +133,99 @@ class _ParticleSystemWidgetState extends State<ParticleSystemWidget>
 
   void _spawnParticle({required bool atTop}) {
     final x = _random.nextDouble() * _screenSize.width;
-    final y = atTop ? -20.0 : _random.nextDouble() * _screenSize.height;
-    
-    // Choose varying shades of pink/gold
-    final colors = [
-      widget.particleColor,
-      widget.particleColor.withOpacity(0.8),
-      const Color(0xFFF8BBD0), // Soft Pink
-      const Color(0xFFFFF59D).withOpacity(0.5), // Subtle Gold sparkle
-    ];
+    final y = atTop 
+        ? (widget.weather == GardenWeather.starry ? _screenSize.height + 10.0 : -20.0) 
+        : _random.nextDouble() * _screenSize.height;
 
-    _particles.add(PetalParticle(
-      x: x,
-      y: y,
-      speedY: 0.8 + _random.nextDouble() * 1.5,
-      speedX: -0.5 + _random.nextDouble() * 1.0,
-      size: 6.0 + _random.nextDouble() * 12.0,
-      angle: _random.nextDouble() * math.pi * 2,
-      spinSpeed: 0.01 + _random.nextDouble() * 0.03,
-      opacity: 0.3 + _random.nextDouble() * 0.6,
-      color: colors[_random.nextInt(colors.length)],
-    ));
+    final particle = _createParticleForWeather(x, y);
+    _particles.add(particle);
   }
 
   void _resetParticle(PetalParticle p) {
     p.x = _random.nextDouble() * _screenSize.width;
-    p.y = -20.0;
-    p.speedY = 0.8 + _random.nextDouble() * 1.5;
-    p.speedX = -0.5 + _random.nextDouble() * 1.0;
-    p.size = 6.0 + _random.nextDouble() * 12.0;
-    p.angle = _random.nextDouble() * math.pi * 2;
-    p.spinSpeed = 0.01 + _random.nextDouble() * 0.03;
-    p.opacity = 0.3 + _random.nextDouble() * 0.6;
+    p.y = widget.weather == GardenWeather.starry ? _screenSize.height + 10.0 : -20.0;
+    
+    final template = _createParticleForWeather(p.x, p.y);
+    p.speedY = template.speedY;
+    p.speedX = template.speedX;
+    p.size = template.size;
+    p.angle = template.angle;
+    p.spinSpeed = template.spinSpeed;
+    p.opacity = template.opacity;
+    p.color = template.color;
+    p.type = template.type;
+  }
+
+  PetalParticle _createParticleForWeather(double x, double y) {
+    switch (widget.weather) {
+      case GardenWeather.rainy:
+        return PetalParticle(
+          x: x,
+          y: y,
+          speedY: 6.0 + _random.nextDouble() * 4.0, // Quick rainfall
+          speedX: -0.5 + _random.nextDouble() * 0.5,
+          size: 10.0 + _random.nextDouble() * 10.0, // Length of rain streak
+          angle: 0.05,
+          spinSpeed: 0.0,
+          opacity: 0.2 + _random.nextDouble() * 0.3,
+          color: const Color(0xFFB3E5FC), // Translucent rain blue
+          type: ParticleType.rain,
+        );
+      case GardenWeather.starry:
+        // Fireflies floating UP
+        return PetalParticle(
+          x: x,
+          y: y,
+          speedY: -0.4 - _random.nextDouble() * 0.8, // Float upwards
+          speedX: -0.3 + _random.nextDouble() * 0.6,
+          size: 3.0 + _random.nextDouble() * 4.0,
+          angle: 0.0,
+          spinSpeed: 0.0,
+          opacity: 0.4 + _random.nextDouble() * 0.6,
+          color: const Color(0xFFC5E1A5), // Firefly neon green-yellow
+          type: ParticleType.firefly,
+        );
+      case GardenWeather.windy:
+        // Swirling gold/green autumn leaves
+        final leafColors = [
+          const Color(0xFFFFB74D), // Golden orange
+          const Color(0xFFFFD54F), // Bright gold
+          const Color(0xFF81C784), // Pale green
+        ];
+        return PetalParticle(
+          x: x,
+          y: y,
+          speedY: 1.5 + _random.nextDouble() * 2.0,
+          speedX: 2.0 + _random.nextDouble() * 3.0, // Blowing horizontally
+          size: 8.0 + _random.nextDouble() * 10.0,
+          angle: _random.nextDouble() * math.pi * 2,
+          spinSpeed: 0.04 + _random.nextDouble() * 0.05,
+          opacity: 0.4 + _random.nextDouble() * 0.5,
+          color: leafColors[_random.nextInt(leafColors.length)],
+          type: ParticleType.windyLeaf,
+        );
+      case GardenWeather.sunny:
+      default:
+        // Soft pink petals drifting down
+        final colors = [
+          widget.particleColor,
+          widget.particleColor.withOpacity(0.8),
+          const Color(0xFFF8BBD0), // Soft Pink
+          const Color(0xFFFFF59D).withOpacity(0.5), // Soft gold sparkle
+        ];
+        return PetalParticle(
+          x: x,
+          y: y,
+          speedY: 0.8 + _random.nextDouble() * 1.5,
+          speedX: -0.5 + _random.nextDouble() * 1.0,
+          size: 6.0 + _random.nextDouble() * 12.0,
+          angle: _random.nextDouble() * math.pi * 2,
+          spinSpeed: 0.01 + _random.nextDouble() * 0.03,
+          opacity: 0.3 + _random.nextDouble() * 0.6,
+          color: colors[_random.nextInt(colors.length)],
+          type: ParticleType.petal,
+        );
+    }
   }
 
   @override
@@ -130,7 +235,6 @@ class _ParticleSystemWidgetState extends State<ParticleSystemWidget>
         if (_screenSize.width != constraints.maxWidth ||
             _screenSize.height != constraints.maxHeight) {
           _screenSize = Size(constraints.maxWidth, constraints.maxHeight);
-          // Initial population
           if (_particles.isEmpty) {
             for (int i = 0; i < widget.maxParticles ~/ 2; i++) {
               _spawnParticle(atTop: false);
@@ -156,22 +260,44 @@ class _ParticlePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     for (final p in particles) {
       final paint = Paint()
-        ..color = p.color.withOpacity(p.opacity)
+        ..color = p.color.withOpacity(p.opacity.clamp(0.0, 1.0))
         ..style = PaintingStyle.fill;
 
       canvas.save();
       canvas.translate(p.x, p.y);
       canvas.rotate(p.angle);
 
-      // Draw custom leaf/petal shape (oval with tapered end)
-      final path = Path();
-      path.moveTo(0, -p.size / 2);
-      path.quadraticBezierTo(p.size * 0.4, -p.size * 0.2, p.size * 0.2, p.size / 2);
-      path.quadraticBezierTo(0, p.size * 0.3, -p.size * 0.2, p.size / 2);
-      path.quadraticBezierTo(-p.size * 0.4, -p.size * 0.2, 0, -p.size / 2);
-      path.close();
+      if (p.type == ParticleType.rain) {
+        // Draw thin raindrop streak lines
+        final rainPaint = Paint()
+          ..color = p.color.withOpacity(p.opacity.clamp(0.0, 1.0))
+          ..strokeWidth = 1.5
+          ..style = PaintingStyle.stroke
+          ..strokeCap = StrokeCap.round;
+        canvas.drawLine(Offset.zero, Offset(0, p.size), rainPaint);
+      } else if (p.type == ParticleType.firefly) {
+        // Draw glowing circular spark particles
+        final glowPaint = Paint()
+          ..shader = RadialGradient(
+            colors: [
+              Colors.white,
+              p.color.withOpacity(p.opacity.clamp(0.0, 1.0)),
+              p.color.withOpacity(0.0),
+            ],
+          ).createShader(Rect.fromCircle(center: Offset.zero, radius: p.size * 2))
+          ..style = PaintingStyle.fill;
+        canvas.drawCircle(Offset.zero, p.size * 2, glowPaint);
+      } else {
+        // Draw custom leaf/petal shape (oval with tapered end)
+        final path = Path();
+        path.moveTo(0, -p.size / 2);
+        path.quadraticBezierTo(p.size * 0.4, -p.size * 0.2, p.size * 0.2, p.size / 2);
+        path.quadraticBezierTo(0, p.size * 0.3, -p.size * 0.2, p.size / 2);
+        path.quadraticBezierTo(-p.size * 0.4, -p.size * 0.2, 0, -p.size / 2);
+        path.close();
 
-      canvas.drawPath(path, paint);
+        canvas.drawPath(path, paint);
+      }
       canvas.restore();
     }
   }
