@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -105,7 +106,9 @@ class _GardenScreenState extends State<GardenScreen> {
                 child: SafeArea(
                   child: ModelViewer(
                     id: 'mangrove-greenhouse',
-                    src: 'assets/images/stylized_mangrove_greenhouse.glb',
+                    src: kIsWeb
+                        ? 'assets/assets/images/stylized_mangrove_greenhouse.glb'
+                        : 'assets/images/stylized_mangrove_greenhouse.glb',
                     alt: 'A premium 3D mangrove greenhouse sanctuary',
                     backgroundColor: Colors.transparent,
                     autoRotate: true,
