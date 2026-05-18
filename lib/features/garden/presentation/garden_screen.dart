@@ -115,7 +115,9 @@ class _GardenScreenState extends State<GardenScreen> {
                     autoRotateDelay: 6000,
                     rotationPerSecond: '12deg',
                     cameraControls: true,
-                    exposure: 1.25,
+                    exposure: 1.15,
+                    environmentImage: 'neutral',
+                    interactionPrompt: InteractionPrompt.none,
                     minCameraOrbit: 'auto auto auto',
                     maxCameraOrbit: 'auto auto auto',
                     // Listeners from Javascript inside WebView
@@ -198,22 +200,22 @@ class _GardenScreenState extends State<GardenScreen> {
                         }
                       </style>
 
-                      <button slot="hotspot-1" data-position="0.0 1.5 0.5" class="hotspot-btn" onclick="HotspotChannel.postMessage('hotspot-1')">
+                      <button slot="hotspot-1" data-position="0.0 2.2 0.0" data-normal="0 1 0" class="hotspot-btn" onclick="HotspotChannel.postMessage('hotspot-1')">
                         1
                         <span class="hotspot-label">1. Write Sprout</span>
                       </button>
 
-                      <button slot="hotspot-2" data-position="-0.9 0.8 -0.4" class="hotspot-btn" onclick="HotspotChannel.postMessage('hotspot-2')">
+                      <button slot="hotspot-2" data-position="-2.5 0.5 0.5" data-normal="0 1 0" class="hotspot-btn" onclick="HotspotChannel.postMessage('hotspot-2')">
                         2
                         <span class="hotspot-label">2. Garden Logs</span>
                       </button>
 
-                      <button slot="hotspot-3" data-position="0.8 0.4 0.6" class="hotspot-btn" onclick="HotspotChannel.postMessage('hotspot-3')">
+                      <button slot="hotspot-3" data-position="2.2 0.3 0.2" data-normal="0 1 0" class="hotspot-btn" onclick="HotspotChannel.postMessage('hotspot-3')">
                         3
                         <span class="hotspot-label">3. Shift Weather</span>
                       </button>
 
-                      <button slot="hotspot-4" data-position="0.0 0.9 -0.6" class="hotspot-btn" onclick="HotspotChannel.postMessage('hotspot-4')">
+                      <button slot="hotspot-4" data-position="-0.5 0.8 1.8" data-normal="0 1 0" class="hotspot-btn" onclick="HotspotChannel.postMessage('hotspot-4')">
                         4
                         <span class="hotspot-label">4. Breathing Space</span>
                       </button>
