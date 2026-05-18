@@ -1,0 +1,342 @@
+# 🌷 Tulip — Journal/Diary App
+
+A premium Flutter journal/diary app with an enchanting tulip garden main screen, rich micro-animations, and an addictive, nature-inspired UI that keeps users coming back.
+
+## User Review Required
+
+> [!IMPORTANT]
+> **Flutter SDK Not Found** — Flutter is not currently installed on your machine. Before I can create and run the project, you'll need to install Flutter.
+> 
+> I can guide you through the installation, or you can install it yourself:
+> ```bash
+> # Option 1: Homebrew
+> brew install --cask flutter
+> 
+> # Option 2: Manual
+> # Download from https://docs.flutter.dev/get-started/install/macos
+> ```
+> Please confirm once Flutter is installed so I can proceed with project creation.
+
+> [!IMPORTANT]
+> **Project Initialization** — Per your rules, I will NOT create a git repo. I'll use `flutter create` to scaffold the project inside `/Users/ralein/Desktop/Project/Tulip/`. Please confirm this location is correct.
+
+---
+
+## Design Vision
+
+Based on the reference GIF (500×353 tulip garden animation), the app will feature:
+
+### Color Palette — "Tulip Garden"
+| Token | Color | Usage |
+|-------|-------|-------|
+| `tulipPink` | `#E91E63` / `#F06292` | Primary tulip accents, FAB, highlights |
+| `tulipRed` | `#D32F2F` / `#EF5350` | Secondary tulip accents |
+| `petalSoft` | `#FCE4EC` / `#F8BBD0` | Soft backgrounds, cards |
+| `leafGreen` | `#2E7D32` / `#66BB6A` | Stems, nature elements, success states |
+| `skyBlue` | `#E3F2FD` / `#BBDEFB` | Sky gradient, calm backgrounds |
+| `sunGold` | `#FFD54F` / `#FFF176` | Sun, sparkles, achievement badges |
+| `soilBrown` | `#5D4037` / `#795548` | Ground elements, earthy accents |
+| `nightIndigo` | `#1A237E` / `#283593` | Dark mode primary |
+| `duskPurple` | `#4A148C` / `#7B1FA2` | Dark mode accent |
+
+### Typography
+- **Headers**: `Playfair Display` (elegant serif for journal titles)
+- **Body**: `Inter` or `Nunito` (clean, readable)
+- **Handwriting accents**: `Caveat` (for journal prompts, quotes)
+
+---
+
+## Architecture
+
+### Stack
+- **Framework**: Flutter 3.x + Dart 3.x
+- **State Management**: Riverpod 2.x (compile-time safe, scalable)
+- **Local DB**: Hive (fast, lightweight NoSQL for journal entries)
+- **Architecture**: Clean Architecture (data → domain → presentation)
+- **Animations**: Custom `AnimationController` + `CustomPainter` + Rive/Lottie
+- **DI**: Riverpod providers (no separate DI framework needed)
+
+### Project Structure
+```
+lib/
+├── main.dart
+├── app.dart
+├── core/
+│   ├── theme/
+│   │   ├── app_theme.dart              # ThemeData, color schemes
+│   │   ├── app_colors.dart             # Tulip color palette
+│   │   ├── app_typography.dart         # Font styles
+│   │   └── app_dimensions.dart         # Spacing, radii
+│   ├── router/
+│   │   └── app_router.dart             # GoRouter config
+│   ├── utils/
+│   │   ├── date_utils.dart
+│   │   └── string_utils.dart
+│   └── widgets/
+│       ├── animated_gradient_bg.dart   # Animated gradient background
+│       ├── glassmorphic_card.dart       # Frosted glass cards
+│       ├── tulip_painter.dart          # CustomPainter for tulips
+│       ├── particle_system.dart        # Floating petals/sparkles
+│       ├── parallax_background.dart    # Multi-layer parallax
+│       └── breathing_widget.dart       # Pulsing/breathing animation wrapper
+├── features/
+│   ├── garden/                         # 🌷 Main Screen — Tulip Garden
+│   │   ├── presentation/
+│   │   │   ├── garden_screen.dart      # Main garden view
+│   │   │   ├── widgets/
+│   │   │   │   ├── tulip_field.dart    # Animated tulip field
+│   │   │   │   ├── floating_petals.dart # Petal particle system
+│   │   │   │   ├── garden_sky.dart     # Animated sky with clouds
+│   │   │   │   ├── sun_widget.dart     # Animated sun with rays
+│   │   │   │   ├── mood_tulip.dart     # Tulip that represents mood
+│   │   │   │   ├── entry_preview_card.dart # Recent entries
+│   │   │   │   ├── streak_counter.dart # Writing streak
+│   │   │   │   └── quick_actions.dart  # Quick action buttons
+│   │   │   └── providers/
+│   │   │       └── garden_provider.dart
+│   │   └── domain/
+│   │       └── garden_state.dart
+│   ├── journal/                        # 📝 Journal Entries
+│   │   ├── data/
+│   │   │   ├── journal_repository.dart
+│   │   │   └── models/
+│   │   │       └── journal_entry.dart
+│   │   ├── domain/
+│   │   │   └── journal_service.dart
+│   │   └── presentation/
+│   │       ├── journal_list_screen.dart
+│   │       ├── journal_editor_screen.dart
+│   │       ├── widgets/
+│   │       │   ├── entry_card.dart
+│   │       │   ├── mood_selector.dart
+│   │       │   └── tag_chips.dart
+│   │       └── providers/
+│   │           └── journal_provider.dart
+│   ├── onboarding/                     # 🌱 Onboarding Flow
+│   │   └── presentation/
+│   │       ├── onboarding_screen.dart
+│   │       └── widgets/
+│   │           ├── growing_tulip_animation.dart
+│   │           └── onboarding_page.dart
+│   └── settings/                       # ⚙️ Settings
+│       └── presentation/
+│           └── settings_screen.dart
+└── assets/
+    ├── animations/                     # Rive/Lottie files
+    ├── fonts/
+    └── images/
+```
+
+---
+
+## Proposed Changes
+
+### Phase 1 — Project Scaffold & Theme System
+
+#### [NEW] Flutter project scaffold
+- `flutter create` with proper org name and project name
+- Configure `pubspec.yaml` with all dependencies
+
+#### [NEW] `pubspec.yaml` — Dependencies
+```yaml
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_riverpod: ^2.5.1
+  go_router: ^14.2.0
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  google_fonts: ^6.2.1
+  uuid: ^4.4.0
+  intl: ^0.19.0
+  flutter_animate: ^4.5.0      # Declarative animations
+  animated_text_kit: ^4.2.2    # Text animations
+  shimmer: ^3.0.0              # Shimmer effects
+  lottie: ^3.1.0               # Lottie animations
+  flutter_staggered_animations: ^1.1.1
+  
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  hive_generator: ^2.0.1
+  build_runner: ^2.4.9
+```
+
+#### [NEW] `lib/core/theme/app_colors.dart`
+Complete tulip-inspired color system with light/dark variants.
+
+#### [NEW] `lib/core/theme/app_theme.dart`
+Material 3 ThemeData with custom color scheme, typography, component themes.
+
+#### [NEW] `lib/core/theme/app_typography.dart`
+Font configuration with Playfair Display, Inter/Nunito, and Caveat.
+
+---
+
+### Phase 2 — Animation Engine (Core Widgets)
+
+> [!TIP]
+> This is the heart of the "addictive" experience — every widget breathes, sways, and responds to touch.
+
+#### [NEW] `lib/core/widgets/tulip_painter.dart`
+Custom `CustomPainter` that draws vector tulips with:
+- Bezier curve petals with gradient fills
+- Animated stems that sway with a sine wave
+- Randomized tulip heights, colors, and bloom states
+- Touch response — tulips lean toward finger
+
+#### [NEW] `lib/core/widgets/particle_system.dart`
+Floating petal particle system:
+- Petals drift down with realistic physics (wind, gravity, rotation)
+- Subtle sparkle particles that catch "sunlight"
+- Fireflies at night (dark mode)
+- Performance-optimized with `RepaintBoundary`
+
+#### [NEW] `lib/core/widgets/animated_gradient_bg.dart`
+Time-of-day responsive gradient background:
+- Morning: warm peach → soft blue
+- Afternoon: sky blue → white
+- Evening: orange → pink → purple
+- Night: deep indigo → dark purple
+- Smooth 60-second transition cycles
+
+#### [NEW] `lib/core/widgets/parallax_background.dart`
+Multi-layer parallax scene:
+- Layer 1 (far): Sky with animated clouds
+- Layer 2 (mid): Distant hills/mountains
+- Layer 3 (near): Tulip field
+- Layer 4 (foreground): Floating petals
+- Responds to scroll and device tilt (accelerometer)
+
+#### [NEW] `lib/core/widgets/glassmorphic_card.dart`
+Frosted glass card with:
+- `BackdropFilter` blur
+- Semi-transparent gradient border
+- Subtle shimmer on hover/press
+- Spring-based scale animation on tap
+
+#### [NEW] `lib/core/widgets/breathing_widget.dart`
+Wrapper widget for pulsing/breathing animations:
+- Configurable amplitude, duration, curve
+- Used for CTAs, badges, active elements
+
+---
+
+### Phase 3 — Garden Main Screen (The Hero)
+
+#### [NEW] `lib/features/garden/presentation/garden_screen.dart`
+The magical main screen featuring:
+
+**Visual Layout (top to bottom):**
+1. **Animated Sky** — Gradient sky with drifting clouds, sun/moon based on time
+2. **Tulip Garden** — Field of animated tulips, each representing a journal entry
+   - New tulip sprouts with a "growing" animation when you write
+   - Tulips bloom more fully based on entry length/depth
+   - Garden grows richer as your journal streak increases
+3. **Floating Petals** — Particle overlay for atmosphere
+4. **Glassmorphic Action Area** — Bottom sheet with:
+   - Today's mood prompt
+   - Writing streak counter with fire animation
+   - Recent entries carousel with 3D perspective
+   - "Write" FAB with spring bounce + petal burst on tap
+
+**Animations Inventory:**
+| Animation | Type | Trigger |
+|-----------|------|---------|
+| Tulip sway | `CustomPainter` + sine wave | Continuous (wind) |
+| Tulip grow | `AnimationController` + `CurvedAnimation` | New entry saved |
+| Petal fall | Particle system | Continuous |
+| Sky gradient shift | `AnimationController` + `ColorTween` | Time of day |
+| Cloud drift | `Transform.translate` + loop | Continuous |
+| Card slide-up | Staggered `SlideTransition` | Screen load |
+| FAB pulse | `ScaleTransition` + breathing | Idle state |
+| FAB tap burst | Particle emission | On tap |
+| Streak fire | `flutter_animate` shimmer | When streak > 0 |
+| Entry card 3D tilt | `Transform` + gesture | On drag |
+| Sun rays rotate | `RotationTransition` | Continuous |
+| Mood tulip color | `ColorTween` | Mood selection |
+
+#### [NEW] `lib/features/garden/presentation/widgets/tulip_field.dart`
+The animated tulip garden:
+- Uses `CustomPainter` for efficient rendering of 20-50 tulips
+- Each tulip has independent sway phase offset
+- Touch interactions: tap a tulip to see its entry
+- Tulips arranged in perspective rows (bigger in front)
+
+#### [NEW] `lib/features/garden/presentation/widgets/floating_petals.dart`
+Atmospheric petal system with wind simulation.
+
+#### [NEW] `lib/features/garden/presentation/widgets/garden_sky.dart`
+Animated sky with clouds, sun/moon, and gradient transitions.
+
+#### [NEW] `lib/features/garden/presentation/widgets/streak_counter.dart`
+Animated writing streak with fire/glow effects.
+
+#### [NEW] `lib/features/garden/presentation/widgets/quick_actions.dart`
+Staggered animation action buttons with spring physics.
+
+---
+
+### Phase 4 — Journal Feature
+
+#### [NEW] `lib/features/journal/data/models/journal_entry.dart`
+Hive model with fields: id, title, content, mood, tags, createdAt, updatedAt.
+
+#### [NEW] `lib/features/journal/data/journal_repository.dart`
+Hive-based CRUD with reactive streams.
+
+#### [NEW] `lib/features/journal/presentation/journal_editor_screen.dart`
+Rich text editor with:
+- Animated word/character counter
+- Mood selector with animated tulip color change
+- Auto-save with subtle pulse indicator
+- Hero transition from garden tulip to editor
+
+#### [NEW] `lib/features/journal/presentation/journal_list_screen.dart`
+Entry list with staggered slide-in animations and swipe-to-delete with petal dissolution effect.
+
+---
+
+### Phase 5 — Onboarding & Polish
+
+#### [NEW] `lib/features/onboarding/presentation/onboarding_screen.dart`
+3-page onboarding with:
+- Page 1: Seed planting animation (tulip growing from seed)
+- Page 2: Garden blooming animation
+- Page 3: User writing, garden flourishing
+
+#### Polish Pass
+- Page transitions with `Hero` animations
+- Haptic feedback on key interactions
+- Sound effects (optional, toggleable)
+- Performance profiling with `RepaintBoundary` optimization
+
+---
+
+## Open Questions
+
+> [!IMPORTANT]
+> 1. **Flutter SDK**: Do you have Flutter installed elsewhere, or should I guide you through installation?
+> 2. **Target platforms**: iOS only, Android only, or both?
+> 3. **Dark mode**: Should the garden transform to a moonlit night garden in dark mode? (I recommend yes — fireflies replacing petals, glowing tulips)
+> 4. **Lottie/Rive assets**: Should I create all animations purely with code (`CustomPainter`), or would you like me to also generate some Lottie animations? Code-only is more flexible but Lottie can look more polished.
+> 5. **The reference GIF** (`_.gif`): I couldn't render it due to browser limitations. Can you briefly describe what's in it? (e.g., is it a 3D garden, 2D illustration, pixel art, watercolor style?)
+
+---
+
+## Verification Plan
+
+### Automated Tests
+```bash
+flutter test                    # Unit + widget tests
+flutter run                     # Manual verification on simulator
+flutter run --profile           # Performance profiling (60fps check)
+```
+
+### Manual Verification
+- Verify all 12+ animations run at 60fps on physical device
+- Verify time-of-day gradient transitions
+- Test journal CRUD operations
+- Verify staggered animations on screen transitions
+- Check memory usage with particle systems running
+- Test dark mode garden transformation

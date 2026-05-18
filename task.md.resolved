@@ -1,0 +1,43 @@
+# 🌷 Tulip — Task Tracker
+
+## Phase 1 — Project Scaffold & Theme System
+- `[ ]` Install Flutter SDK
+- `[ ]` Create Flutter project with `flutter create`
+- `[ ]` Configure `pubspec.yaml` with dependencies
+- `[ ]` Create `app_colors.dart` — Tulip color palette
+- `[ ]` Create `app_typography.dart` — Font configuration
+- `[ ]` Create `app_theme.dart` — Material 3 theme
+- `[ ]` Create `app_dimensions.dart` — Spacing tokens
+- `[ ]` Create `main.dart` and `app.dart` — App entry + router
+
+## Phase 2 — Animation Engine (Core Widgets)
+- `[ ]` Create `tulip_painter.dart` — CustomPainter tulips
+- `[ ]` Create `particle_system.dart` — Floating petals
+- `[ ]` Create `animated_gradient_bg.dart` — Time-of-day gradient
+- `[ ]` Create `parallax_background.dart` — Multi-layer parallax
+- `[ ]` Create `glassmorphic_card.dart` — Frosted glass cards
+- `[ ]` Create `breathing_widget.dart` — Pulsing wrapper
+
+## Phase 3 — Garden Main Screen
+- `[ ]` Create `garden_screen.dart` — Main garden view
+- `[ ]` Create `tulip_field.dart` — Animated tulip garden
+- `[ ]` Create `floating_petals.dart` — Petal particle overlay
+- `[ ]` Create `garden_sky.dart` — Animated sky + clouds
+- `[ ]` Create `sun_widget.dart` — Animated sun with rays
+- `[ ]` Create `streak_counter.dart` — Writing streak
+- `[ ]` Create `quick_actions.dart` — Action buttons
+- `[ ]` Create `entry_preview_card.dart` — Recent entries
+
+## Phase 4 — Journal Feature
+- `[ ]` Create `journal_entry.dart` — Hive model
+- `[ ]` Create `journal_repository.dart` — Hive CRUD
+- `[ ]` Create `journal_provider.dart` — Riverpod providers
+- `[ ]` Create `journal_editor_screen.dart` — Write/edit
+- `[ ]` Create `journal_list_screen.dart` — Entry list
+- `[ ]` Create `mood_selector.dart` — Mood picker widget
+
+## Phase 5 — Onboarding & Polish
+- `[ ]` Create `onboarding_screen.dart` — 3-page onboarding
+- `[ ]` Page transitions & Hero animations
+- `[ ]` Performance optimization pass
+- `[ ]` Build verification
