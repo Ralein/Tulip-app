@@ -7,7 +7,7 @@ import 'features/garden/presentation/garden_screen.dart';
 import 'features/journal/presentation/journal_editor_screen.dart';
 import 'features/journal/presentation/journal_list_screen.dart';
 import 'features/journal/data/models/journal_entry.dart';
-// import 'features/onboarding/presentation/onboarding_screen.dart'; // Placeholder for now
+import 'features/onboarding/presentation/onboarding_screen.dart';
 
 class App extends ConsumerWidget {
   const App({super.key});
@@ -19,6 +19,10 @@ class App extends ConsumerWidget {
       routes: [
         GoRoute(
           path: '/',
+          builder: (context, state) => const OnboardingScreen(),
+        ),
+        GoRoute(
+          path: '/garden',
           builder: (context, state) => const GardenScreen(),
         ),
         GoRoute(

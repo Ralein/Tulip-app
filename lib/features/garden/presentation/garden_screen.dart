@@ -1,49 +1,19 @@
-import 'dart:async';
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:model_viewer_plus/model_viewer_plus.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_dimensions.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/animated_gradient_bg.dart';
-import '../../../core/widgets/breathing_widget.dart';
 import '../../../core/widgets/glassmorphic_card.dart';
 import '../../../core/widgets/particle_system.dart';
-import '../../../core/widgets/tulip_painter.dart';
 import '../../journal/presentation/providers/journal_provider.dart';
 import 'providers/garden_state_provider.dart';
-import 'widgets/garden_sky.dart';
+import 'widgets/breathing_dialog.dart';
 import 'widgets/streak_counter.dart';
-import 'widgets/tulip_field.dart';
 import 'widgets/weather_controller.dart';
-
-class PlantedSeed {
-  final Offset position;
-  final DateTime plantedAt;
-  final Color color;
-  final double scaleTarget;
-
-  PlantedSeed({
-    required this.position,
-    required this.plantedAt,
-    required this.color,
-    required this.scaleTarget,
-  });
-}
-
-class SkySparkle {
-  final Offset position;
-  final DateTime createdAt;
-  final double maxRadius;
-
-  SkySparkle({
-    required this.position,
-    required this.createdAt,
-    required this.maxRadius,
-  });
-}
 
 class GardenScreen extends StatefulWidget {
   const GardenScreen({super.key});
@@ -52,72 +22,56 @@ class GardenScreen extends StatefulWidget {
   State<GardenScreen> createState() => _GardenScreenState();
 }
 
-class _GardenScreenState extends State<GardenScreen> with TickerProviderStateMixin {
-  final List<PlantedSeed> _seeds = [];
-  final List<SkySparkle> _sparkles = [];
-  final math.Random _random = math.Random();
-  Timer? _decayTimer;
-
-  @override
-  void initState() {
-    super.initState();
-    // Decay timer to remove temporary seedlings/sparkles after they bloom fully
-    _decayTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted) return;
-      final now = DateTime.now();
-      setState(() {
-        _seeds.removeWhere((seed) => now.difference(seed.plantedAt).inSeconds > 12);
-        _sparkles.removeWhere((sparkle) => now.difference(sparkle.createdAt).inMilliseconds > 800);
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    _decayTimer?.cancel();
-    super.dispose();
-  }
-
-  Color _getRandomTulipColor() {
-    final colors = [
-      AppColors.tulipPink,
-      AppColors.tulipPinkLight,
-      AppColors.tulipPinkDark,
-      AppColors.tulipRed,
-      AppColors.tulipRedLight,
-      AppColors.sunGold,
-      AppColors.moonYellow,
-      AppColors.duskPurpleLight,
-      const Color(0xFFE040FB), // Glowing purple tulip
-      const Color(0xFF00E5FF), // Magic cyan tulip
-    ];
-    return colors[_random.nextInt(colors.length)];
-  }
-
-  void _onGardenTapped(Offset localPosition, double screenHeight) {
-    final relativeY = localPosition.dy / screenHeight;
-
-    if (relativeY < 0.35) {
-      // Tap is in the sky: Spawn an elegant celestial sparkle ripple!
-      setState(() {
-        _sparkles.add(SkySparkle(
-          position: localPosition,
-          createdAt: DateTime.now(),
-          maxRadius: 20.0 + _random.nextDouble() * 20.0,
-        ));
-      });
-    } else {
-      // Tap is in the soil: Seed planting!
-      setState(() {
-        _seeds.add(PlantedSeed(
-          position: localPosition,
-          plantedAt: DateTime.now(),
-          color: _getRandomTulipColor(),
-          scaleTarget: 0.6 + _random.nextDouble() * 0.4,
-        ));
-      });
-      // Trigger a light haptic sensation style animation
+class _GardenScreenState extends State<GardenScreen> {
+  // Callback when a hotspot is clicked on the 3D model
+  void _handleHotspotClick(String slotId) {
+    if (!mounted) return;
+    switch (slotId) {
+      case 'hotspot-1':
+        // 1. Write Journal
+        context.go('/editor');
+        break;
+      case 'hotspot-2':
+        // 2. Garden Logs
+        context.go('/entries');
+        break;
+      case 'hotspot-3':
+        // 3. Shift Weather Ambient drawer
+        _showAtmosphereDrawer();
+        break;
+      case 'hotspot-4':
+        // 4. Breathing mindfulness session
+        _showBreathingModal();
+        break;
     }
+  }
+
+  void _showAtmosphereDrawer() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) {
+        return const Padding(
+          padding: EdgeInsets.only(
+            left: AppDimensions.space16,
+            right: AppDimensions.space16,
+            bottom: AppDimensions.space24,
+          ),
+          child: WeatherController(),
+        );
+      },
+    );
+  }
+
+  void _showBreathingModal() {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.4),
+      builder: (context) {
+        return const BreathingDialog();
+      },
+    );
   }
 
   @override
@@ -139,156 +93,133 @@ class _GardenScreenState extends State<GardenScreen> with TickerProviderStateMix
                 weather: gardenState.weather,
               ),
 
-              // 2. Sky Elements
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                height: size.height * 0.45,
-                child: GardenSky(
-                  isNight: gardenState.time == DayTime.night || gardenState.time == DayTime.evening,
-                ),
-              ),
-
-              // 3. Falling Petals / Atmospheric weather particles
+              // 2. Falling Petals / Atmospheric weather particles
               Positioned.fill(
                 child: ParticleSystemWidget(
                   weather: gardenState.weather,
                 ),
               ),
 
-              // 4. Perspective 3D Swaying Stable Tulip Field
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                height: size.height * 0.65,
-                child: entriesAsync.when(
-                  loading: () => const Center(
-                    child: CircularProgressIndicator(color: AppColors.tulipPink),
-                  ),
-                  error: (err, stack) => Center(
-                    child: Text('Error: $err'),
-                  ),
-                  data: (entries) => TulipField(entries: entries),
-                ),
-              ),
-
-              // 5. Interactive sandbox layer (Captures Taps for planting seeds/sparkles!)
+              // 3. Central 3D Model Viewer of stylized_mangrove_greenhouse.glb
               Positioned.fill(
-                child: GestureDetector(
-                  onTapDown: (details) => _onGardenTapped(details.localPosition, size.height),
-                  child: Container(
-                    color: Colors.transparent,
+                child: SafeArea(
+                  child: ModelViewer(
+                    id: 'mangrove-greenhouse',
+                    src: 'assets/images/stylized_mangrove_greenhouse.glb',
+                    alt: 'A premium 3D mangrove greenhouse sanctuary',
+                    backgroundColor: Colors.transparent,
+                    autoRotate: true,
+                    autoRotateDelay: 6000,
+                    rotationPerSecond: '12deg',
+                    cameraControls: true,
+                    exposure: 1.25,
+                    minCameraOrbit: 'auto auto auto',
+                    maxCameraOrbit: 'auto auto auto',
+                    // Listeners from Javascript inside WebView
+                    javascriptChannels: {
+                      JavascriptChannel(
+                        'HotspotChannel',
+                        onMessageReceived: (message) {
+                          _handleHotspotClick(message.message);
+                        },
+                      ),
+                    },
+                    // Interactive Hotspots placed directly inside HTML WebComponent
+                    innerModelViewerHtml: '''
+                      <style>
+                        .hotspot-btn {
+                          position: relative;
+                          background: rgba(233, 30, 99, 0.85);
+                          color: white;
+                          border: 2px solid rgba(255, 255, 255, 0.85);
+                          border-radius: 50%;
+                          width: 38px;
+                          height: 38px;
+                          font-family: sans-serif;
+                          font-weight: 800;
+                          font-size: 15px;
+                          cursor: pointer;
+                          box-shadow: 0 0 15px rgba(233,30,99,0.7), inset 0 0 8px rgba(255,255,255,0.3);
+                          display: flex;
+                          align-items: center;
+                          justify-content: center;
+                          padding: 0;
+                          transition: transform 0.2s, background 0.3s;
+                        }
+                        .hotspot-btn::after {
+                          content: '';
+                          position: absolute;
+                          top: -6px;
+                          left: -6px;
+                          right: -6px;
+                          bottom: -6px;
+                          border: 2px solid #E91E63;
+                          border-radius: 50%;
+                          animation: ripple 1.6s infinite ease-out;
+                          opacity: 0;
+                          pointer-events: none;
+                        }
+                        @keyframes ripple {
+                          0% {
+                            transform: scale(0.8);
+                            opacity: 0.8;
+                            box-shadow: 0 0 0 0 rgba(233,30,99,0.5);
+                          }
+                          100% {
+                            transform: scale(1.3);
+                            opacity: 0;
+                            box-shadow: 0 0 0 12px rgba(233,30,99,0);
+                          }
+                        }
+                        .hotspot-btn:hover {
+                          transform: scale(1.1);
+                          background: rgba(233, 30, 99, 1);
+                        }
+                        .hotspot-btn:active {
+                          transform: scale(1.2);
+                        }
+                        .hotspot-label {
+                          position: absolute;
+                          left: 48px;
+                          background: rgba(15, 15, 25, 0.88);
+                          color: #FFF59D;
+                          padding: 6px 14px;
+                          border-radius: 12px;
+                          font-size: 13px;
+                          font-weight: bold;
+                          letter-spacing: 0.5px;
+                          white-space: nowrap;
+                          pointer-events: none;
+                          border: 1px solid rgba(255, 255, 255, 0.18);
+                          box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+                        }
+                      </style>
+
+                      <button slot="hotspot-1" data-position="0.0 1.5 0.5" class="hotspot-btn" onclick="HotspotChannel.postMessage('hotspot-1')">
+                        1
+                        <span class="hotspot-label">1. Write Sprout</span>
+                      </button>
+
+                      <button slot="hotspot-2" data-position="-0.9 0.8 -0.4" class="hotspot-btn" onclick="HotspotChannel.postMessage('hotspot-2')">
+                        2
+                        <span class="hotspot-label">2. Garden Logs</span>
+                      </button>
+
+                      <button slot="hotspot-3" data-position="0.8 0.4 0.6" class="hotspot-btn" onclick="HotspotChannel.postMessage('hotspot-3')">
+                        3
+                        <span class="hotspot-label">3. Shift Weather</span>
+                      </button>
+
+                      <button slot="hotspot-4" data-position="0.0 0.9 -0.6" class="hotspot-btn" onclick="HotspotChannel.postMessage('hotspot-4')">
+                        4
+                        <span class="hotspot-label">4. Breathing Space</span>
+                      </button>
+                    ''',
                   ),
                 ),
               ),
 
-              // 6. Sky Sparkle Ripple Renderings
-              ..._sparkles.map((sparkle) {
-                final elapsedMs = DateTime.now().difference(sparkle.createdAt).inMilliseconds;
-                final progress = math.min(1.0, elapsedMs / 800.0);
-                final opacity = 1.0 - progress;
-
-                return Positioned(
-                  left: sparkle.position.dx - sparkle.maxRadius,
-                  top: sparkle.position.dy - sparkle.maxRadius,
-                  child: IgnorePointer(
-                    child: AnimatedBuilder(
-                      animation: const AlwaysStoppedAnimation(0),
-                      builder: (context, child) {
-                        return Container(
-                          width: sparkle.maxRadius * 2,
-                          height: sparkle.maxRadius * 2,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: Colors.white.withOpacity(opacity.clamp(0.0, 1.0)),
-                              width: 1.5,
-                            ),
-                            gradient: RadialGradient(
-                              colors: [
-                                Colors.white.withOpacity((opacity * 0.6).clamp(0.0, 1.0)),
-                                Colors.transparent,
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                );
-              }),
-
-              // 7. Temporary Sprouts Growing Real-Time!
-              ..._seeds.map((seed) {
-                final elapsedMs = DateTime.now().difference(seed.plantedAt).inMilliseconds;
-                
-                // Growth phase 1: Stem sprout (first 2 seconds)
-                final growthProgress = math.min(1.0, elapsedMs / 2500.0);
-                
-                // Growth phase 2: Bloom factor (following 2 seconds)
-                final bloomFactor = elapsedMs > 2500
-                    ? math.min(1.0, (elapsedMs - 2500) / 2000.0)
-                    : 0.0;
-
-                // Bounce spring scale animation
-                final scale = growthProgress < 0.8
-                    ? (growthProgress / 0.8) * seed.scaleTarget * 0.9
-                    : seed.scaleTarget;
-
-                // Sway animation
-                final swayAngle = 0.05 * math.sin(elapsedMs / 250.0);
-
-                return Positioned(
-                  left: seed.position.dx - 40,
-                  top: seed.position.dy - 80,
-                  child: IgnorePointer(
-                    child: SizedBox(
-                      width: 80,
-                      height: 100,
-                      child: Transform.scale(
-                        scale: scale,
-                        alignment: Alignment.bottomCenter,
-                        child: CustomPaint(
-                          painter: TulipPainter(
-                            tulipColor: seed.color,
-                            growthProgress: growthProgress,
-                            bloomFactor: bloomFactor,
-                            swayAngle: swayAngle,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              }),
-
-              // 8. Ambient ground shadow overlay
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                height: 120,
-                child: IgnorePointer(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          isDark
-                              ? AppColors.bgDark.withOpacity(0.8)
-                              : AppColors.bgLight.withOpacity(0.8),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
-              // 9. Glowing Stats Header
+              // 4. Glowing HUD Header Floating Over Model
               Positioned(
                 top: MediaQuery.of(context).padding.top + AppDimensions.space8,
                 left: AppDimensions.space16,
@@ -305,7 +236,29 @@ class _GardenScreenState extends State<GardenScreen> with TickerProviderStateMix
                       orElse: () => const StreakCounter(streakDays: 0),
                     ),
 
-                    // View Logs Button
+                    // Quick Action Helper Hint Indicator
+                    GlassmorphicCard(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.explore_outlined,
+                            size: 16,
+                            color: isDark ? AppColors.sunGold : AppColors.tulipPinkDark,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Tap nodes to interact',
+                            style: AppTypography.bodySmall(isDark: isDark).copyWith(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // View Logs Menu Button
                     InkWell(
                       onTap: () => context.go('/entries'),
                       borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
@@ -322,79 +275,28 @@ class _GardenScreenState extends State<GardenScreen> with TickerProviderStateMix
                 ),
               ),
 
-              // 10. Ambient Weather and Atmosphere Controller
-              Positioned(
-                bottom: 150,
-                left: AppDimensions.space16,
-                right: AppDimensions.space16,
-                child: const WeatherController(),
-              ),
-
-              // 11. Empty Garden Helper Text (with interactive hints!)
-              entriesAsync.maybeWhen(
-                data: (entries) {
-                  if (entries.isNotEmpty) return const SizedBox();
-                  return Positioned(
-                    bottom: 330,
-                    left: 32,
-                    right: 32,
-                    child: IgnorePointer(
-                      child: Column(
-                        children: [
-                          Text(
-                            'Your Garden is Empty',
-                            style: AppTypography.journalSubTitle(isDark: isDark).copyWith(
-                              fontSize: 22,
-                              color: isDark ? Colors.white70 : Colors.black87,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            'Tap anywhere on the ground to plant interactive test seeds, or tap the Sprout FAB below to write and grow your permanent tulips!',
-                            textAlign: TextAlign.center,
-                            style: AppTypography.bodySmall(isDark: isDark).copyWith(
-                              fontSize: 13,
-                              color: isDark ? Colors.white54 : Colors.black54,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-                orElse: () => const SizedBox(),
-              ),
-
-              // 12. Floating Action Sprout Button
+              // 5. Ambient visual instructions overlay at the bottom
               Positioned(
                 bottom: AppDimensions.space24,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: BreathingWidget(
-                    minScale: 0.95,
-                    maxScale: 1.05,
-                    duration: const Duration(seconds: 2),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.tulipPink.withOpacity(0.4),
-                            blurRadius: 15,
-                            spreadRadius: 3,
-                          ),
-                        ],
+                left: AppDimensions.space32,
+                right: AppDimensions.space32,
+                child: IgnorePointer(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.black38,
+                      borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
+                      border: Border.all(
+                        color: Colors.white12,
+                        width: 1,
                       ),
-                      child: FloatingActionButton.large(
-                        onPressed: () => context.go('/editor'),
-                        backgroundColor: AppColors.tulipPink,
-                        foregroundColor: Colors.white,
-                        shape: const CircleBorder(),
-                        child: const Icon(
-                          Icons.spa_rounded,
-                          size: 32,
-                        ),
+                    ),
+                    child: Text(
+                      'Drag to rotate sanctuary • Pinch to zoom',
+                      textAlign: TextAlign.center,
+                      style: AppTypography.bodySmall(isDark: true).copyWith(
+                        fontSize: 12,
+                        color: Colors.white70,
                       ),
                     ),
                   ),

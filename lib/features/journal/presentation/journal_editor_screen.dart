@@ -85,7 +85,7 @@ class _JournalEditorScreenState extends ConsumerState<JournalEditorScreen> {
       ),
     );
 
-    context.go('/');
+    context.go('/garden');
   }
 
   @override
@@ -101,7 +101,7 @@ class _JournalEditorScreenState extends ConsumerState<JournalEditorScreen> {
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          onPressed: () => context.go('/'),
+          onPressed: () => context.go('/garden'),
         ),
         actions: [
           IconButton(

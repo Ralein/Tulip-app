@@ -27,7 +27,7 @@ class JournalListScreen extends ConsumerWidget {
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          onPressed: () => context.go('/'),
+          onPressed: () => context.go('/garden'),
         ),
       ),
       body: Container(
