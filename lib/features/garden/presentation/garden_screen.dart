@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:model_viewer_plus/model_viewer_plus.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_dimensions.dart';
@@ -24,6 +25,21 @@ class GardenScreen extends StatefulWidget {
 }
 
 class _GardenScreenState extends State<GardenScreen> {
+  WebViewController? _webViewController;
+
+  void _resetCamera() {
+    _webViewController?.runJavaScript('''
+      const viewer = document.querySelector('model-viewer');
+      if (viewer) {
+        // Reset camera target and orbit back to original settings smoothly
+        viewer.setAttribute('interpolation-decay', '200');
+        viewer.cameraOrbit = 'auto auto auto';
+        viewer.cameraTarget = 'auto auto auto';
+        viewer.autoRotate = true;
+      }
+    ''');
+  }
+
   void _handleHotspotClick(String slotId) {
     if (!mounted) return;
     switch (slotId) {
@@ -136,6 +152,9 @@ class _GardenScreenState extends State<GardenScreen> {
                         },
                       ),
                     },
+                    onWebViewCreated: (controller) {
+                      _webViewController = controller;
+                    },
                     innerModelViewerHtml: '''
                       <img src="x" style="display:none;" onerror="
                         if (!window.twLoaded) {
@@ -185,15 +204,15 @@ class _GardenScreenState extends State<GardenScreen> {
 
                           // ── Camera targets (zoomed in closer for premium feel) ────────
                           const cameraTargets = {
-                            'hotspot-1': { orbit: '190deg 75deg 0.30m', target: '0.78 1.01 7.28' },
+                            'hotspot-1': { orbit: '190deg 75deg 1.1m', target: '0.78 1.01 7.28' },
                             'hotspot-2': { orbit: '350deg 72deg 0.50m', target: '0.02 0.48 3.41' },
-                            'hotspot-3': { orbit: '320deg 55deg 0.70m', target: '0.0 1.0 -2.0' }
+                            'hotspot-3': { orbit: '320deg 55deg 1.8m', target: '-0.5 1.0 -2.0' }
                           };
 
                           const target = cameraTargets[slotId];
                           if (target) {
-                            // Set a very smooth interpolation-decay (250ms) for cinematic zoom-in
-                            viewer.setAttribute('interpolation-decay', '250');
+                            // Set a snappy interpolation-decay (200ms) so transitions complete quickly before navigation
+                            viewer.setAttribute('interpolation-decay', '200');
                             viewer.autoRotate = false;
                             viewer.cameraOrbit = target.orbit;
                             viewer.cameraTarget = target.target;
@@ -265,7 +284,7 @@ class _GardenScreenState extends State<GardenScreen> {
                       </button>
 
                       <!-- Hotspot 3 · Koi Pond -->
-                      <button slot="hotspot-3" data-position="0.0 1.0 -2.0" data-normal="0 1 0" class="hotspot-btn" onclick="zoomToHotspot('hotspot-3')">
+                      <button slot="hotspot-3" data-position="-0.5 1.0 -2.0" data-normal="0 1 0" class="hotspot-btn" onclick="zoomToHotspot('hotspot-3')">
                         3<span class="hotspot-label">Koi Pond</span>
                       </button>
                     ''',
@@ -295,7 +314,7 @@ class _GardenScreenState extends State<GardenScreen> {
                       child: Row(
                         children: [
                           Icon(
-                            Icons.explore_outlined,
+                            Icons.touch_app_outlined,
                             size: 16,
                             color: isDark ? AppColors.sunGold : AppColors.tulipPinkDark,
                           ),
@@ -311,18 +330,38 @@ class _GardenScreenState extends State<GardenScreen> {
                       ),
                     ),
 
-                    // View logs button
-                    InkWell(
-                      onTap: () => context.go('/entries'),
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
-                      child: GlassmorphicCard(
-                        padding: const EdgeInsets.all(AppDimensions.space12),
-                        child: Icon(
-                          Icons.menu_book_rounded,
-                          color: isDark ? Colors.white : AppColors.tulipPinkDark,
-                          size: 20,
+                    // Navigation & control actions
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Reset View Compass button
+                        InkWell(
+                          onTap: _resetCamera,
+                          borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
+                          child: GlassmorphicCard(
+                            padding: const EdgeInsets.all(AppDimensions.space12),
+                            child: Icon(
+                              Icons.explore,
+                              color: isDark ? Colors.white : AppColors.tulipPinkDark,
+                              size: 20,
+                            ),
+                          ),
                         ),
-                      ),
+                        const SizedBox(width: AppDimensions.space8),
+                        // View logs button
+                        InkWell(
+                          onTap: () => context.go('/entries'),
+                          borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
+                          child: GlassmorphicCard(
+                            padding: const EdgeInsets.all(AppDimensions.space12),
+                            child: Icon(
+                              Icons.menu_book_rounded,
+                              color: isDark ? Colors.white : AppColors.tulipPinkDark,
+                              size: 20,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
