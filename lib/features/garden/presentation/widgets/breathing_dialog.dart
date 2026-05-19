@@ -115,14 +115,14 @@ class _BreathingDialogState extends State<BreathingDialog> {
                         height: 170,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: _breathColor.withOpacity(0.08),
+                          color: _breathColor.withValues(alpha: 0.08),
                           border: Border.all(
-                            color: _breathColor.withOpacity(0.35),
+                            color: _breathColor.withValues(alpha: 0.35),
                             width: 1.5,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: _breathColor.withOpacity(0.2),
+                              color: _breathColor.withValues(alpha: 0.2),
                               blurRadius: 30,
                               spreadRadius: 5,
                             ),
@@ -142,7 +142,7 @@ class _BreathingDialogState extends State<BreathingDialog> {
                         height: 120,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: _breathColor.withOpacity(0.18),
+                          color: _breathColor.withValues(alpha: 0.18),
                           border: Border.all(
                             color: _breathColor,
                             width: 2.5,

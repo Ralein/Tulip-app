@@ -26,13 +26,13 @@ class AppDimensions {
   static List<BoxShadow> glassShadow({required bool isDark}) {
     return [
       BoxShadow(
-        color: isDark ? Colors.black.withOpacity(0.3) : Colors.black.withOpacity(0.05),
+        color: isDark ? Colors.black.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.05),
         blurRadius: 20,
         spreadRadius: -5,
         offset: const Offset(0, 10),
       ),
       BoxShadow(
-        color: isDark ? Colors.white.withOpacity(0.02) : Colors.white.withOpacity(0.2),
+        color: isDark ? Colors.white.withValues(alpha: 0.02) : Colors.white.withValues(alpha: 0.2),
         blurRadius: 0,
         spreadRadius: 1,
         offset: const Offset(0, -1), // Top highlight

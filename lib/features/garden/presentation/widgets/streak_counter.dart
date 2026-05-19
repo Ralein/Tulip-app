@@ -30,14 +30,14 @@ class StreakCounter extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
           border: Border.all(
             color: streakDays > 0 
-                ? AppColors.sunGold.withOpacity(0.5) 
+                ? AppColors.sunGold.withValues(alpha: 0.5) 
                 : (isDark ? AppColors.glassBorderDark : AppColors.glassBorderLight),
             width: 1.5,
           ),
           boxShadow: streakDays > 0
               ? [
                   BoxShadow(
-                    color: AppColors.sunGold.withOpacity(0.2),
+                    color: AppColors.sunGold.withValues(alpha: 0.2),
                     blurRadius: 10,
                     spreadRadius: 2,
                   ),

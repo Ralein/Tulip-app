@@ -30,7 +30,6 @@ class _JournalEditorScreenState extends ConsumerState<JournalEditorScreen> {
   late TextEditingController _contentController;
   late String _selectedMood;
   late Color _tulipColor;
-  late double _bloomFactor;
 
   @override
   void initState() {
@@ -47,7 +46,6 @@ class _JournalEditorScreenState extends ConsumerState<JournalEditorScreen> {
     _tulipColor = widget.entry != null
         ? Color(int.parse(widget.entry!.tulipColorHex))
         : initialMoodItem.tulipColor;
-    _bloomFactor = widget.entry?.growthProgress ?? initialMoodItem.bloomFactor;
   }
 
   @override
@@ -71,7 +69,7 @@ class _JournalEditorScreenState extends ConsumerState<JournalEditorScreen> {
       tags: widget.entry?.tags ?? ['journal'],
       createdAt: widget.entry?.createdAt ?? now,
       updatedAt: now,
-      tulipColorHex: _tulipColor.value.toString(),
+      tulipColorHex: _tulipColor.toARGB32().toString(),
       swayPhaseOffset: widget.entry?.swayPhaseOffset ?? (math.Random().nextDouble() * math.pi * 2),
       growthProgress: 1.0, // Mark as fully grown when written!
     );
@@ -143,7 +141,6 @@ class _JournalEditorScreenState extends ConsumerState<JournalEditorScreen> {
                       setState(() {
                         _selectedMood = moodItem.key;
                         _tulipColor = moodItem.tulipColor;
-                        _bloomFactor = moodItem.bloomFactor;
                       });
                     },
                   ),
@@ -158,7 +155,7 @@ class _JournalEditorScreenState extends ConsumerState<JournalEditorScreen> {
                       decoration: InputDecoration(
                         hintText: 'Give your sprout a name...',
                         hintStyle: AppTypography.journalSubTitle(isDark: isDark).copyWith(
-                          color: isDark ? AppColors.textSecondaryDark.withOpacity(0.5) : AppColors.textSecondaryLight.withOpacity(0.5),
+                          color: isDark ? AppColors.textSecondaryDark.withValues(alpha: 0.5) : AppColors.textSecondaryLight.withValues(alpha: 0.5),
                         ),
                         border: InputBorder.none,
                       ),
@@ -180,7 +177,7 @@ class _JournalEditorScreenState extends ConsumerState<JournalEditorScreen> {
                           decoration: InputDecoration(
                             hintText: 'Write down what sways your mind...',
                             hintStyle: AppTypography.bodyNormal(isDark: isDark).copyWith(
-                              color: isDark ? AppColors.textSecondaryDark.withOpacity(0.5) : AppColors.textSecondaryLight.withOpacity(0.5),
+                              color: isDark ? AppColors.textSecondaryDark.withValues(alpha: 0.5) : AppColors.textSecondaryLight.withValues(alpha: 0.5),
                             ),
                             border: InputBorder.none,
                           ),

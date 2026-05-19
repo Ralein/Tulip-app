@@ -205,13 +205,12 @@ class _ParticleSystemWidgetState extends State<ParticleSystemWidget>
           type: ParticleType.windyLeaf,
         );
       case GardenWeather.sunny:
-      default:
         // Soft pink petals drifting down
         final colors = [
           widget.particleColor,
-          widget.particleColor.withOpacity(0.8),
+          widget.particleColor.withValues(alpha: 0.8),
           const Color(0xFFF8BBD0), // Soft Pink
-          const Color(0xFFFFF59D).withOpacity(0.5), // Soft gold sparkle
+          const Color(0xFFFFF59D).withValues(alpha: 0.5), // Soft gold sparkle
         ];
         return PetalParticle(
           x: x,
@@ -260,7 +259,7 @@ class _ParticlePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     for (final p in particles) {
       final paint = Paint()
-        ..color = p.color.withOpacity(p.opacity.clamp(0.0, 1.0))
+        ..color = p.color.withValues(alpha: p.opacity.clamp(0.0, 1.0))
         ..style = PaintingStyle.fill;
 
       canvas.save();
@@ -270,7 +269,7 @@ class _ParticlePainter extends CustomPainter {
       if (p.type == ParticleType.rain) {
         // Draw thin raindrop streak lines
         final rainPaint = Paint()
-          ..color = p.color.withOpacity(p.opacity.clamp(0.0, 1.0))
+          ..color = p.color.withValues(alpha: p.opacity.clamp(0.0, 1.0))
           ..strokeWidth = 1.5
           ..style = PaintingStyle.stroke
           ..strokeCap = StrokeCap.round;
@@ -281,8 +280,8 @@ class _ParticlePainter extends CustomPainter {
           ..shader = RadialGradient(
             colors: [
               Colors.white,
-              p.color.withOpacity(p.opacity.clamp(0.0, 1.0)),
-              p.color.withOpacity(0.0),
+              p.color.withValues(alpha: p.opacity.clamp(0.0, 1.0)),
+              p.color.withValues(alpha: 0.0),
             ],
           ).createShader(Rect.fromCircle(center: Offset.zero, radius: p.size * 2))
           ..style = PaintingStyle.fill;

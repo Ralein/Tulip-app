@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../../core/widgets/animated_gradient_bg.dart';
 import '../../../../core/widgets/glassmorphic_card.dart';
 import '../providers/garden_state_provider.dart';
 

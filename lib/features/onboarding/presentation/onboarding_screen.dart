@@ -50,9 +50,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final size = MediaQuery.of(context).size;
-
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
@@ -71,9 +68,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Colors.black.withOpacity(0.2),
-                  Colors.black.withOpacity(0.4),
-                  Colors.black.withOpacity(0.75),
+                  Colors.black.withValues(alpha: 0.2),
+                  Colors.black.withValues(alpha: 0.4),
+                  Colors.black.withValues(alpha: 0.75),
                 ],
                 stops: const [0.0, 0.5, 1.0],
               ),
@@ -121,7 +118,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                         color: Colors.white,
                         shadows: [
                           Shadow(
-                            color: Colors.black.withOpacity(0.5),
+                            color: Colors.black.withValues(alpha: 0.5),
                             offset: const Offset(0, 4),
                             blurRadius: 10,
                           ),
@@ -138,7 +135,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                         color: AppColors.moonYellow,
                         shadows: [
                           Shadow(
-                            color: Colors.black.withOpacity(0.4),
+                            color: Colors.black.withValues(alpha: 0.4),
                             offset: const Offset(0, 2),
                             blurRadius: 5,
                           ),
@@ -152,15 +149,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                     Container(
                       padding: const EdgeInsets.all(AppDimensions.space24),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.12),
+                        color: Colors.white.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(AppDimensions.radius24),
                         border: Border.all(
-                          color: Colors.white.withOpacity(0.18),
+                          color: Colors.white.withValues(alpha: 0.18),
                           width: 1.5,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
+                            color: Colors.black.withValues(alpha: 0.2),
                             blurRadius: 15,
                             spreadRadius: -2,
                           ),
@@ -169,7 +166,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                       child: Text(
                         'Step into a peaceful, interactive sanctuary to water and tend your inner thoughts. Every journal entry plants a seed that flourishes in real-time.',
                         style: AppTypography.bodyNormal(isDark: true).copyWith(
-                          color: Colors.white.withOpacity(0.92),
+                          color: Colors.white.withValues(alpha: 0.92),
                           height: 1.6,
                           fontSize: 15,
                         ),
@@ -184,7 +181,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                         borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.tulipPink.withOpacity(0.55),
+                            color: AppColors.tulipPink.withValues(alpha: 0.55),
                             blurRadius: 25,
                             spreadRadius: 2,
                             offset: const Offset(0, 4),

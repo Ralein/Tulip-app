@@ -86,7 +86,7 @@ class MoodSelector extends StatelessWidget {
                 borderRadius: BorderRadius.circular(AppDimensions.radius24),
                 border: Border.all(
                   color: isSelected
-                      ? mood.tulipColor.withOpacity(0.5)
+                      ? mood.tulipColor.withValues(alpha: 0.5)
                       : Colors.transparent,
                   width: 1.5,
                 ),

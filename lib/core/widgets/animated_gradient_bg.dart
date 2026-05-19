@@ -77,7 +77,6 @@ class _AnimatedGradientBgState extends State<AnimatedGradientBg>
         // Blend with mystical dusty bronze/amber
         return baseColors.map((color) => Color.lerp(color, const Color(0xFF4E3629), 0.3)!).toList();
       case GardenWeather.sunny:
-      default:
         return baseColors;
     }
   }
