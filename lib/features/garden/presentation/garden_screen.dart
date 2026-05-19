@@ -14,7 +14,7 @@ import '../../journal/presentation/providers/journal_provider.dart';
 import 'providers/garden_state_provider.dart';
 import 'widgets/breathing_dialog.dart';
 import 'widgets/streak_counter.dart';
-import 'widgets/weather_controller.dart';
+
 
 class GardenScreen extends StatefulWidget {
   const GardenScreen({super.key});
@@ -34,7 +34,7 @@ class _GardenScreenState extends State<GardenScreen> {
         context.go('/entries');
         break;
       case 'hotspot-3':
-        _showAtmosphereDrawer();
+        _showBreathingModal();
         break;
       case 'hotspot-4':
         _showBreathingModal();
@@ -46,23 +46,7 @@ class _GardenScreenState extends State<GardenScreen> {
     }
   }
 
-  void _showAtmosphereDrawer() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) {
-        return const Padding(
-          padding: EdgeInsets.only(
-            left: AppDimensions.space16,
-            right: AppDimensions.space16,
-            bottom: AppDimensions.space24,
-          ),
-          child: WeatherController(),
-        );
-      },
-    );
-  }
+
 
   void _showBreathingModal() {
     showDialog(
@@ -141,9 +125,8 @@ class _GardenScreenState extends State<GardenScreen> {
                     rotationPerSecond: '12deg',
                     cameraControls: true,
                     exposure: 1.15,
-                    environmentImage: 'neutral',
                     interactionPrompt: InteractionPrompt.none,
-                    minCameraOrbit: 'auto auto auto',
+                    minCameraOrbit: 'auto auto 0.1m',
                     maxCameraOrbit: 'auto auto auto',
                     javascriptChannels: {
                       JavascriptChannel(
@@ -179,6 +162,16 @@ class _GardenScreenState extends State<GardenScreen> {
                           };
                         }
 
+                        // Register pointerdown listener on the model-viewer to ensure manual rotation remains snappy and premium
+                        setTimeout(function() {
+                          const viewer = document.querySelector('model-viewer');
+                          if (viewer) {
+                            viewer.addEventListener('pointerdown', () => {
+                              viewer.setAttribute('interpolation-decay', '80');
+                            });
+                          }
+                        }, 200);
+
                         window.zoomToHotspot = function(slotId) {
                           const viewer = document.querySelector('model-viewer');
                           if (!viewer) {
@@ -187,32 +180,46 @@ class _GardenScreenState extends State<GardenScreen> {
                           }
 
                           document.querySelectorAll('.hotspot-btn').forEach(b => b.classList.remove('active'));
-                          const activeBtn = document.querySelector('[slot=\\'' + slotId + '\\']');
+                          const activeBtn = document.querySelector('[slot="' + slotId + '"]');
                           if (activeBtn) activeBtn.classList.add('active');
 
-                          // ── Camera targets (from Sketchfab API, Z-up → Y-up) ────────
+                          // ── Camera targets (zoomed in closer for premium feel) ────────
                           const cameraTargets = {
-                            'hotspot-1': { orbit: '190deg 75deg 1.5m',  target: '0.78 1.01 7.28'  },
-                            'hotspot-2': { orbit: '350deg 72deg 1.8m',  target: '0.02 0.48 3.41'   },
-                            'hotspot-3': { orbit: '30deg 60deg 2.0m',   target: '5.81 2.21 1.41'  },
-                            'hotspot-4': { orbit: '320deg 55deg 2.5m',  target: '0.0 1.0 -2.0'   }
+                            'hotspot-1': { orbit: '190deg 75deg 0.30m', target: '0.78 1.01 7.28' },
+                            'hotspot-2': { orbit: '350deg 72deg 0.50m', target: '0.02 0.48 3.41' },
+                            'hotspot-3': { orbit: '320deg 55deg 0.70m', target: '0.0 1.0 -2.0' }
                           };
 
                           const target = cameraTargets[slotId];
                           if (target) {
+                            // Set a very smooth interpolation-decay (250ms) for cinematic zoom-in
+                            viewer.setAttribute('interpolation-decay', '250');
                             viewer.autoRotate = false;
                             viewer.cameraOrbit = target.orbit;
                             viewer.cameraTarget = target.target;
-                            viewer.setAttribute('interpolation-decay', '100');
+
+                            // For hotspots that navigate (1 and 2), we transition after the zoom-in settles (1000ms)
+                            // For modal hotspots (3 and 4), we keep the zoom longer to let them enjoy the close-up
+                            const isModal = slotId === 'hotspot-3' || slotId === 'hotspot-4';
+                            const actionDelay = 1000;
+                            const resetDelay = isModal ? 5000 : 1200;
 
                             setTimeout(function() {
                               HotspotChannel.postMessage(slotId);
+                              
+                              // Smoothly zoom back out after the delay
                               setTimeout(function() {
-                                viewer.autoRotate = true;
+                                viewer.setAttribute('interpolation-decay', '200');
                                 viewer.cameraOrbit = 'auto auto auto';
                                 viewer.cameraTarget = 'auto auto auto';
-                              }, 800);
-                            }, 900);
+                                
+                                // Resume auto-rotation after the camera settles back (1500ms)
+                                setTimeout(function() {
+                                  viewer.autoRotate = true;
+                                  viewer.setAttribute('interpolation-decay', '80');
+                                }, 1500);
+                              }, resetDelay);
+                            }, actionDelay);
                           } else {
                             HotspotChannel.postMessage(slotId);
                           }
@@ -257,14 +264,9 @@ class _GardenScreenState extends State<GardenScreen> {
                         2<span class="hotspot-label">📓 Garden Logs</span>
                       </button>
 
-                      <!-- Hotspot 3 · Shift Weather — Mangrove Tree -->
-                      <button slot="hotspot-3" data-position="5.81 2.21 1.41" data-normal="0 1 0" class="hotspot-btn" onclick="zoomToHotspot('hotspot-3')">
-                        3<span class="hotspot-label">🌤 Shift Weather</span>
-                      </button>
-
-                      <!-- Hotspot 4 · Koi Pond  -->
-                      <button slot="hotspot-4" data-position="0.0 1.0 -2.0" data-normal="0 1 0" class="hotspot-btn" onclick="zoomToHotspot('hotspot-4')">
-                        4<span class="hotspot-label">Koi Pond</span>
+                      <!-- Hotspot 3 · Koi Pond -->
+                      <button slot="hotspot-3" data-position="0.0 1.0 -2.0" data-normal="0 1 0" class="hotspot-btn" onclick="zoomToHotspot('hotspot-3')">
+                        3<span class="hotspot-label">Koi Pond</span>
                       </button>
                     ''',
                   ),
