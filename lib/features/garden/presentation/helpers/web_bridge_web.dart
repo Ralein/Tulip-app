@@ -14,10 +14,33 @@ void initPlatformWebBridge(void Function(String slotId) onMessage) {
   );
 }
 
-void resetCameraOnWeb() {
-  final iframes = web.document.querySelectorAll('iframe');
-  for (int i = 0; i < iframes.length; i++) {
-    final iframe = iframes.item(i) as web.HTMLIFrameElement;
-    iframe.contentWindow?.postMessage('reset-camera'.toJS, '*'.toJS);
+void _postToIframesInNode(web.Node node) {
+  if (node is web.HTMLIFrameElement) {
+    node.contentWindow?.postMessage('reset-camera'.toJS, '*'.toJS);
   }
+  
+  if (node is web.Element) {
+    final shadow = node.shadowRoot;
+    if (shadow != null) {
+      final childNodes = shadow.childNodes;
+      for (int i = 0; i < childNodes.length; i++) {
+        final child = childNodes.item(i);
+        if (child != null) {
+          _postToIframesInNode(child);
+        }
+      }
+    }
+  }
+
+  final childNodes = node.childNodes;
+  for (int i = 0; i < childNodes.length; i++) {
+    final child = childNodes.item(i);
+    if (child != null) {
+      _postToIframesInNode(child);
+    }
+  }
+}
+
+void resetCameraOnWeb() {
+  _postToIframesInNode(web.document.body ?? web.document.documentElement!);
 }
