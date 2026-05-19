@@ -192,11 +192,10 @@ class _GardenScreenState extends State<GardenScreen> {
 
                           // ── Camera targets (from Sketchfab API, Z-up → Y-up) ────────
                           const cameraTargets = {
-                            'hotspot-1': { orbit: '190deg 75deg 4.0m',  target: '0.78 1.01 -7.48'  },
-                            'hotspot-2': { orbit: '350deg 72deg 4.5m',  target: '0.02 0.48 3.41'   },
-                            'hotspot-3': { orbit: '30deg 60deg 5.0m',   target: '-1.81 1.21 4.41'  },
-                            'hotspot-4': { orbit: '320deg 55deg 12.0m', target: '4.30 6.53 2.63'   },
-                            'hotspot-5': { orbit: '180deg 65deg 4.5m',  target: '0.0 1.0 -2.0'     }
+                            'hotspot-1': { orbit: '190deg 75deg 1.5m',  target: '0.78 1.01 7.28'  },
+                            'hotspot-2': { orbit: '350deg 72deg 1.8m',  target: '0.02 0.48 3.41'   },
+                            'hotspot-3': { orbit: '30deg 60deg 2.0m',   target: '5.81 2.21 1.41'  },
+                            'hotspot-4': { orbit: '320deg 55deg 2.5m',  target: '0.0 1.0 -2.0'   }
                           };
 
                           const target = cameraTargets[slotId];
@@ -249,7 +248,7 @@ class _GardenScreenState extends State<GardenScreen> {
                       </style>
 
                       <!-- Hotspot 1 · Write Sprout — Botany Table (desk inside greenhouse) -->
-                      <button slot="hotspot-1" data-position="0.78 1.01 -7.48" data-normal="0 1 0" class="hotspot-btn" onclick="zoomToHotspot('hotspot-1')">
+                      <button slot="hotspot-1" data-position="0.78 1.01 7.28" data-normal="0 1 0" class="hotspot-btn" onclick="zoomToHotspot('hotspot-1')">
                         1<span class="hotspot-label">✏️ Write Sprout</span>
                       </button>
 
@@ -259,18 +258,13 @@ class _GardenScreenState extends State<GardenScreen> {
                       </button>
 
                       <!-- Hotspot 3 · Shift Weather — Mangrove Tree -->
-                      <button slot="hotspot-3" data-position="-1.81 1.21 4.41" data-normal="0 1 0" class="hotspot-btn" onclick="zoomToHotspot('hotspot-3')">
+                      <button slot="hotspot-3" data-position="5.81 2.21 1.41" data-normal="0 1 0" class="hotspot-btn" onclick="zoomToHotspot('hotspot-3')">
                         3<span class="hotspot-label">🌤 Shift Weather</span>
                       </button>
 
-                      <!-- Hotspot 4 · Breathing Space — Greenhouse overview -->
-                      <button slot="hotspot-4" data-position="4.30 6.53 2.63" data-normal="0 1 0" class="hotspot-btn" onclick="zoomToHotspot('hotspot-4')">
-                        4<span class="hotspot-label">🧘 Breathing Space</span>
-                      </button>
-
-                      <!-- Hotspot 5 · Memory Garden — rear grove -->
-                      <button slot="hotspot-5" data-position="0.0 1.0 -2.0" data-normal="0 1 0" class="hotspot-btn" onclick="zoomToHotspot('hotspot-5')">
-                        5<span class="hotspot-label">🌸 Memory Garden</span>
+                      <!-- Hotspot 4 · Koi Pond  -->
+                      <button slot="hotspot-4" data-position="0.0 1.0 -2.0" data-normal="0 1 0" class="hotspot-btn" onclick="zoomToHotspot('hotspot-4')">
+                        4<span class="hotspot-label">Koi Pond</span>
                       </button>
                     ''',
                   ),
