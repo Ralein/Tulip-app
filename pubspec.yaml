@@ -40,6 +40,8 @@ dependencies:
   google_fonts: ^6.1.0
   flutter_staggered_animations: ^1.0.0
   model_viewer_plus: ^1.7.0
+  webview_flutter: ^4.13.1
+  web: ^1.1.1
 
 dev_dependencies:
   flutter_test:

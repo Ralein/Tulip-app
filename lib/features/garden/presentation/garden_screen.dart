@@ -15,6 +15,7 @@ import '../../journal/presentation/providers/journal_provider.dart';
 import 'providers/garden_state_provider.dart';
 import 'widgets/breathing_dialog.dart';
 import 'widgets/streak_counter.dart';
+import 'helpers/web_bridge.dart';
 
 
 class GardenScreen extends StatefulWidget {
@@ -27,15 +28,24 @@ class GardenScreen extends StatefulWidget {
 class _GardenScreenState extends State<GardenScreen> {
   WebViewController? _webViewController;
 
+  @override
+  void initState() {
+    super.initState();
+    initPlatformWebBridge((slotId) {
+      _handleHotspotClick(slotId);
+    });
+  }
+
   void _resetCamera() {
+    resetCameraOnWeb();
     _webViewController?.runJavaScript('''
       const viewer = document.querySelector('model-viewer');
       if (viewer) {
-        // Reset camera target and orbit back to original settings smoothly
         viewer.setAttribute('interpolation-decay', '200');
         viewer.cameraOrbit = 'auto auto auto';
         viewer.cameraTarget = 'auto auto auto';
         viewer.autoRotate = true;
+        document.querySelectorAll('.hotspot-btn').forEach(b => b.classList.remove('active'));
       }
     ''');
   }
@@ -61,8 +71,6 @@ class _GardenScreenState extends State<GardenScreen> {
         break;
     }
   }
-
-
 
   void _showBreathingModal() {
     showDialog(
@@ -194,55 +202,57 @@ class _GardenScreenState extends State<GardenScreen> {
                         window.zoomToHotspot = function(slotId) {
                           const viewer = document.querySelector('model-viewer');
                           if (!viewer) {
-                            HotspotChannel.postMessage(slotId);
+                            if (typeof HotspotChannel !== 'undefined') {
+                              HotspotChannel.postMessage(slotId);
+                            } else {
+                              window.parent.postMessage(slotId, '*');
+                            }
                             return;
                           }
 
-                          document.querySelectorAll('.hotspot-btn').forEach(b => b.classList.remove('active'));
-                          const activeBtn = document.querySelector('[slot="' + slotId + '"]');
-                          if (activeBtn) activeBtn.classList.add('active');
-
-                          // ── Camera targets (zoomed in closer for premium feel) ────────
-                          const cameraTargets = {
-                            'hotspot-1': { orbit: '190deg 75deg 1.1m', target: '0.78 1.01 7.28' },
-                            'hotspot-2': { orbit: '350deg 72deg 0.50m', target: '0.02 0.48 3.41' },
-                            'hotspot-3': { orbit: '320deg 55deg 1.8m', target: '-0.5 1.0 -2.0' }
-                          };
-
-                          const target = cameraTargets[slotId];
-                          if (target) {
-                            // Set a snappy interpolation-decay (200ms) so transitions complete quickly before navigation
-                            viewer.setAttribute('interpolation-decay', '200');
-                            viewer.autoRotate = false;
-                            viewer.cameraOrbit = target.orbit;
-                            viewer.cameraTarget = target.target;
-
-                            // For hotspots that navigate (1 and 2), we transition after the zoom-in settles (1000ms)
-                            // For modal hotspots (3 and 4), we keep the zoom longer to let them enjoy the close-up
-                            const isModal = slotId === 'hotspot-3' || slotId === 'hotspot-4';
-                            const actionDelay = 1000;
-                            const resetDelay = isModal ? 5000 : 1200;
-
-                            setTimeout(function() {
+                          const activeBtn = document.querySelector('[slot=\\'' + slotId + '\\']');
+                          if (activeBtn && activeBtn.classList.contains('active')) {
+                            // 2nd click: Interact!
+                            if (typeof HotspotChannel !== 'undefined') {
                               HotspotChannel.postMessage(slotId);
-                              
-                              // Smoothly zoom back out after the delay
-                              setTimeout(function() {
-                                viewer.setAttribute('interpolation-decay', '200');
-                                viewer.cameraOrbit = 'auto auto auto';
-                                viewer.cameraTarget = 'auto auto auto';
-                                
-                                // Resume auto-rotation after the camera settles back (1500ms)
-                                setTimeout(function() {
-                                  viewer.autoRotate = true;
-                                  viewer.setAttribute('interpolation-decay', '80');
-                                }, 1500);
-                              }, resetDelay);
-                            }, actionDelay);
+                            } else {
+                              window.parent.postMessage(slotId, '*');
+                            }
                           } else {
-                            HotspotChannel.postMessage(slotId);
+                            // 1st click: Zoom to the button
+                            document.querySelectorAll('.hotspot-btn').forEach(b => b.classList.remove('active'));
+                            if (activeBtn) activeBtn.classList.add('active');
+
+                            // ── Camera targets (snappy & zoomed in closer for premium feel) ────────
+                            const cameraTargets = {
+                              'hotspot-1': { orbit: '190deg 75deg 0.35m', target: '0.78 1.01 7.28' },
+                              'hotspot-2': { orbit: '170deg 72deg 0.50m', target: '0.02 0.48 3.41' },
+                              'hotspot-3': { orbit: '320deg 55deg 0.70m', target: '-0.5 1.0 -2.0' }
+                            };
+
+                            const target = cameraTargets[slotId];
+                            if (target) {
+                              viewer.setAttribute('interpolation-decay', '250');
+                              viewer.autoRotate = false;
+                              viewer.cameraOrbit = target.orbit;
+                              viewer.cameraTarget = target.target;
+                            }
                           }
                         };
+
+                        // Register message listener to receive reset commands from Flutter Web
+                        window.addEventListener('message', function(event) {
+                          if (event.data === 'reset-camera') {
+                            const viewer = document.querySelector('model-viewer');
+                            if (viewer) {
+                              viewer.setAttribute('interpolation-decay', '200');
+                              viewer.cameraOrbit = 'auto auto auto';
+                              viewer.cameraTarget = 'auto auto auto';
+                              viewer.autoRotate = true;
+                              document.querySelectorAll('.hotspot-btn').forEach(b => b.classList.remove('active'));
+                            }
+                          }
+                        });
                       " />
 
                       <style type="text/tailwindcss">
@@ -284,7 +294,7 @@ class _GardenScreenState extends State<GardenScreen> {
                       </button>
 
                       <!-- Hotspot 3 · Koi Pond -->
-                      <button slot="hotspot-3" data-position="-0.5 1.0 -2.0" data-normal="0 1 0" class="hotspot-btn" onclick="zoomToHotspot('hotspot-3')">
+                      <button slot="hotspot-3" data-position="0.0 1.0 -2.0" data-normal="0 1 0" class="hotspot-btn" onclick="zoomToHotspot('hotspot-3')">
                         3<span class="hotspot-label">Koi Pond</span>
                       </button>
                     ''',
