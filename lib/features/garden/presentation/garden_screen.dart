@@ -17,7 +17,6 @@ import 'widgets/breathing_dialog.dart';
 import 'widgets/streak_counter.dart';
 import 'helpers/web_bridge.dart';
 
-
 class GardenScreen extends StatefulWidget {
   const GardenScreen({super.key});
 
@@ -85,17 +84,25 @@ class _GardenScreenState extends State<GardenScreen> {
   int _calculateStreak(List<dynamic> entries) {
     if (entries.isEmpty) return 0;
 
-    final days = entries
-        .map((e) => DateTime(e.createdAt.year, e.createdAt.month, e.createdAt.day))
-        .toSet()
-        .toList()
-      ..sort((a, b) => b.compareTo(a)); // newest first
+    final days =
+        entries
+            .map(
+              (e) => DateTime(
+                e.createdAt.year,
+                e.createdAt.month,
+                e.createdAt.day,
+              ),
+            )
+            .toSet()
+            .toList()
+          ..sort((a, b) => b.compareTo(a)); // newest first
 
     final today = DateTime.now();
     final todayDate = DateTime(today.year, today.month, today.day);
 
     // Streak must include today or yesterday to be active
-    if (days.first.isBefore(todayDate.subtract(const Duration(days: 1)))) return 0;
+    if (days.first.isBefore(todayDate.subtract(const Duration(days: 1))))
+      return 0;
 
     int streak = 1;
     for (int i = 0; i < days.length - 1; i++) {
@@ -129,9 +136,7 @@ class _GardenScreenState extends State<GardenScreen> {
 
               // 2. Atmospheric particles (petals, rain, snow, etc.)
               Positioned.fill(
-                child: ParticleSystemWidget(
-                  weather: gardenState.weather,
-                ),
+                child: ParticleSystemWidget(weather: gardenState.weather),
               ),
 
               // 3. Central 3D model
@@ -225,9 +230,9 @@ class _GardenScreenState extends State<GardenScreen> {
 
                             // ── Camera targets (snappy & zoomed in closer for premium feel) ────────
                             const cameraTargets = {
-                              'hotspot-1': { orbit: '190deg 75deg 0.35m', target: '0.78 1.01 7.28' },
-                              'hotspot-2': { orbit: '170deg 72deg 0.50m', target: '0.02 0.48 3.41' },
-                              'hotspot-3': { orbit: '320deg 55deg 0.70m', target: '-0.5 1.0 -2.0' }
+                              'hotspot-1': { orbit: '170deg 80deg 1.20m', target: '-15.00 2.20 2.28' }, 
+                              'hotspot-2': { orbit: '170deg 60deg 0.50m', target: '0.02 0.48 3.41' }, // Tilted down
+                              'hotspot-3': { orbit: '370deg 55deg 0.70m', target: '-1.0 1.0 -2.0' }  // Panned significantly left to center the pond
                             };
 
                             const target = cameraTargets[slotId];
@@ -246,6 +251,9 @@ class _GardenScreenState extends State<GardenScreen> {
                             const viewer = document.querySelector('model-viewer');
                             if (viewer) {
                               viewer.setAttribute('interpolation-decay', '200');
+                              // Force reset of camera properties by removing them or setting to auto
+                              viewer.removeAttribute('camera-orbit');
+                              viewer.removeAttribute('camera-target');
                               viewer.cameraOrbit = 'auto auto auto';
                               viewer.cameraTarget = 'auto auto auto';
                               viewer.autoRotate = true;
@@ -322,29 +330,34 @@ class _GardenScreenState extends State<GardenScreen> {
                   children: [
                     // Streak counter with real consecutive-day calculation
                     entriesAsync.maybeWhen(
-                      data: (entries) => StreakCounter(
-                        streakDays: _calculateStreak(entries),
-                      ),
+                      data: (entries) =>
+                          StreakCounter(streakDays: _calculateStreak(entries)),
                       orElse: () => const StreakCounter(streakDays: 0),
                     ),
 
                     // Hint pill
                     GlassmorphicCard(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
                       child: Row(
                         children: [
                           Icon(
                             Icons.touch_app_outlined,
                             size: 16,
-                            color: isDark ? AppColors.sunGold : AppColors.tulipPinkDark,
+                            color: isDark
+                                ? AppColors.sunGold
+                                : AppColors.tulipPinkDark,
                           ),
                           const SizedBox(width: 6),
                           Text(
                             'Tap nodes to interact',
-                            style: AppTypography.bodySmall(isDark: isDark).copyWith(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                            ),
+                            style: AppTypography.bodySmall(isDark: isDark)
+                                .copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
                           ),
                         ],
                       ),
@@ -357,12 +370,18 @@ class _GardenScreenState extends State<GardenScreen> {
                         // Reset View Compass button
                         InkWell(
                           onTap: _resetCamera,
-                          borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
+                          borderRadius: BorderRadius.circular(
+                            AppDimensions.radiusFull,
+                          ),
                           child: GlassmorphicCard(
-                            padding: const EdgeInsets.all(AppDimensions.space12),
+                            padding: const EdgeInsets.all(
+                              AppDimensions.space12,
+                            ),
                             child: Icon(
                               Icons.explore,
-                              color: isDark ? Colors.white : AppColors.tulipPinkDark,
+                              color: isDark
+                                  ? Colors.white
+                                  : AppColors.tulipPinkDark,
                               size: 20,
                             ),
                           ),
@@ -371,12 +390,18 @@ class _GardenScreenState extends State<GardenScreen> {
                         // View logs button
                         InkWell(
                           onTap: () => context.go('/entries'),
-                          borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
+                          borderRadius: BorderRadius.circular(
+                            AppDimensions.radiusFull,
+                          ),
                           child: GlassmorphicCard(
-                            padding: const EdgeInsets.all(AppDimensions.space12),
+                            padding: const EdgeInsets.all(
+                              AppDimensions.space12,
+                            ),
                             child: Icon(
                               Icons.menu_book_rounded,
-                              color: isDark ? Colors.white : AppColors.tulipPinkDark,
+                              color: isDark
+                                  ? Colors.white
+                                  : AppColors.tulipPinkDark,
                               size: 20,
                             ),
                           ),
@@ -394,19 +419,23 @@ class _GardenScreenState extends State<GardenScreen> {
                 right: AppDimensions.space32,
                 child: IgnorePointer(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 10,
+                      horizontal: 16,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.black38,
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
+                      borderRadius: BorderRadius.circular(
+                        AppDimensions.radiusFull,
+                      ),
                       border: Border.all(color: Colors.white12, width: 1),
                     ),
                     child: Text(
                       'Drag to rotate sanctuary • Pinch to zoom',
                       textAlign: TextAlign.center,
-                      style: AppTypography.bodySmall(isDark: true).copyWith(
-                        fontSize: 12,
-                        color: Colors.white70,
-                      ),
+                      style: AppTypography.bodySmall(
+                        isDark: true,
+                      ).copyWith(fontSize: 12, color: Colors.white70),
                     ),
                   ),
                 ),
