@@ -31,9 +31,6 @@ class GlassmorphicCard extends StatelessWidget {
     
     final resolvedBgColor = color ?? 
         (isDark ? AppColors.glassCardDark : AppColors.glassCardLight);
-        
-    final resolvedBorderColor = borderColor ?? 
-        (isDark ? AppColors.glassBorderDark : AppColors.glassBorderLight);
 
     return Container(
       decoration: BoxDecoration(
@@ -45,16 +42,39 @@ class GlassmorphicCard extends StatelessWidget {
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
           child: Container(
-            padding: padding,
+            padding: EdgeInsets.all(borderWidth),
             decoration: BoxDecoration(
-              color: resolvedBgColor,
               borderRadius: BorderRadius.circular(borderRadius),
-              border: Border.all(
-                color: resolvedBorderColor,
-                width: borderWidth,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.white.withValues(alpha: isDark ? 0.4 : 0.7),
+                  Colors.white.withValues(alpha: 0.0),
+                  isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+                  isDark ? Colors.white.withValues(alpha: 0.15) : Colors.black.withValues(alpha: 0.15),
+                ],
+                stops: const [0.0, 0.4, 0.8, 1.0],
               ),
             ),
-            child: child,
+            child: Container(
+              padding: padding,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(borderRadius > borderWidth ? borderRadius - borderWidth : 0),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.white.withValues(alpha: isDark ? 0.12 : 0.35),
+                    resolvedBgColor,
+                    resolvedBgColor,
+                    Colors.black.withValues(alpha: isDark ? 0.25 : 0.08),
+                  ],
+                  stops: const [0.0, 0.15, 0.85, 1.0],
+                ),
+              ),
+              child: child,
+            ),
           ),
         ),
       ),

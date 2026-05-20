@@ -258,27 +258,37 @@ class _GardenScreenState extends State<GardenScreen> {
                       <style type="text/tailwindcss">
                         @layer components {
                           .hotspot-btn {
-                            @apply relative bg-[rgba(180,180,180,0.18)] text-[rgba(255,255,255,0.7)] border-[1.5px] border-[rgba(255,255,255,0.15)] rounded-full w-10 h-10 font-sans font-bold text-sm cursor-pointer flex items-center justify-center p-0 transition-all duration-[350ms] ease-[cubic-bezier(0.4,0,0.2,1)] backdrop-blur-md group shadow-[0_0_12px_rgba(255,255,255,0.06),inset_0_0_6px_rgba(255,255,255,0.05)];
+                            @apply relative bg-[rgba(180,180,180,0.18)] text-[rgba(255,255,255,0.8)] border-[1.5px] border-[rgba(255,255,255,0.2)] rounded-full w-10 h-10 font-sans font-bold text-sm cursor-pointer flex items-center justify-center p-0 transition-all duration-[400ms] ease-[cubic-bezier(0.34,1.56,0.64,1)] backdrop-blur-md group shadow-[0_4px_12px_rgba(0,0,0,0.1),inset_0_1px_3px_rgba(255,255,255,0.3)];
+                            transform-style: preserve-3d;
                           }
 
                           .hotspot-btn::after {
-                            @apply content-[''] absolute -top-[5px] -left-[5px] -right-[5px] -bottom-[5px] border-[1.5px] border-[rgba(200,200,200,0.2)] rounded-full opacity-0 pointer-events-none animate-pulse-ring;
+                            @apply content-[''] absolute -top-[6px] -left-[6px] -right-[6px] -bottom-[6px] border-[2px] border-[rgba(255,255,255,0.25)] rounded-full opacity-0 pointer-events-none animate-pulse-ring;
                           }
 
                           .hotspot-btn:hover {
-                            @apply scale-[1.12] bg-[rgba(220,220,220,0.45)] text-white/95 border-[rgba(255,255,255,0.4)] shadow-[0_0_20px_rgba(255,255,255,0.15),inset_0_0_10px_rgba(255,255,255,0.1)];
+                            @apply bg-[rgba(255,255,255,0.3)] text-white border-[rgba(255,255,255,0.5)] shadow-[0_8px_20px_rgba(0,0,0,0.15),0_0_20px_rgba(255,255,255,0.2),inset_0_1px_4px_rgba(255,255,255,0.5)];
+                            transform: perspective(400px) scale(1.15) rotateX(12deg) rotateY(-8deg);
                           }
 
                           .hotspot-btn:active {
-                            @apply scale-[1.18] bg-[rgba(240,240,240,0.55)];
+                            @apply bg-[rgba(255,255,255,0.45)] shadow-[0_2px_8px_rgba(0,0,0,0.2),inset_0_2px_6px_rgba(0,0,0,0.1)];
+                            transform: perspective(400px) scale(1.05) rotateX(18deg) rotateY(-12deg) translateZ(-5px);
+                            transition-duration: 150ms;
                           }
 
                           .hotspot-btn.active {
-                            @apply bg-[rgba(255,255,255,0.35)] border-[rgba(255,255,255,0.5)] shadow-[0_0_25px_rgba(255,255,255,0.2)];
+                            @apply bg-[rgba(255,255,255,0.4)] border-[rgba(255,255,255,0.6)] shadow-[0_0_30px_rgba(255,255,255,0.25),inset_0_0_10px_rgba(255,255,255,0.3)];
+                            transform: perspective(400px) scale(1.1) rotateX(5deg) rotateY(-5deg);
                           }
 
                           .hotspot-label {
-                            @apply absolute left-[50px] bg-[rgba(20,20,30,0.82)] text-[rgba(230,230,230,0.9)] py-1.5 px-3 rounded-[10px] text-xs font-semibold tracking-[0.4px] whitespace-nowrap pointer-events-none border border-[rgba(255,255,255,0.1)] shadow-[0_6px_24px_rgba(0,0,0,0.5)] backdrop-blur-sm opacity-0 -translate-x-1.5 transition-all duration-300 ease-in-out group-hover:opacity-100 group-hover:translate-x-0;
+                            @apply absolute left-[50px] bg-[rgba(15,15,20,0.85)] text-[rgba(245,245,245,0.95)] py-1.5 px-3.5 rounded-[12px] text-xs font-semibold tracking-[0.5px] whitespace-nowrap pointer-events-none border border-[rgba(255,255,255,0.15)] shadow-[0_8px_30px_rgba(0,0,0,0.4)] backdrop-blur-md opacity-0 -translate-x-2 transition-all duration-[400ms] ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:opacity-100 group-hover:translate-x-0;
+                            transform-origin: left center;
+                          }
+                          
+                          .hotspot-btn:hover .hotspot-label {
+                            transform: perspective(400px) rotateY(5deg);
                           }
                         }
                       </style>

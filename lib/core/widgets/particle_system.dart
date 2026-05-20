@@ -100,18 +100,18 @@ class _ParticleSystemWidgetState extends State<ParticleSystemWidget>
         } else if (p.type == ParticleType.firefly) {
           // Floating UP gently, with sinewave horizontal sways
           p.y += p.speedY;
-          p.x += p.speedX + math.sin(p.y / 20) * 0.4;
+          p.x += p.speedX + math.sin(p.y / 25) * 0.5 + math.cos(p.y / 10) * 0.2;
           // Flickering opacity
-          p.opacity = math.max(0.1, math.min(1.0, p.opacity + (_random.nextDouble() * 0.1 - 0.05)));
+          p.opacity = math.max(0.1, math.min(1.0, p.opacity + (_random.nextDouble() * 0.15 - 0.075)));
         } else if (p.type == ParticleType.windyLeaf) {
           // Rapid diagonal wind drift
           p.y += p.speedY;
-          p.x += p.speedX + math.sin(p.y / 15) * 1.5;
+          p.x += p.speedX + math.sin(p.y / 20) * 1.8 + math.cos(p.y / 8) * 0.5;
           p.angle += p.spinSpeed;
         } else {
-          // Standard sunny drifting petals
+          // Standard sunny drifting petals with 3D-like organic tumble
           p.y += p.speedY;
-          p.x += p.speedX + math.sin(p.y / 30) * 0.5;
+          p.x += p.speedX + math.sin(p.y / 35) * 0.8 + math.cos(p.y / 15) * 0.4;
           p.angle += p.spinSpeed;
         }
 
@@ -258,10 +258,6 @@ class _ParticlePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     for (final p in particles) {
-      final paint = Paint()
-        ..color = p.color.withValues(alpha: p.opacity.clamp(0.0, 1.0))
-        ..style = PaintingStyle.fill;
-
       canvas.save();
       canvas.translate(p.x, p.y);
       canvas.rotate(p.angle);
@@ -287,6 +283,10 @@ class _ParticlePainter extends CustomPainter {
           ..style = PaintingStyle.fill;
         canvas.drawCircle(Offset.zero, p.size * 2, glowPaint);
       } else {
+        // 3D Tumble simulation using Y-axis scale based on angle
+        final tumbleScale = 0.3 + 0.7 * (math.sin(p.angle * 2.5).abs());
+        canvas.scale(1.0, tumbleScale);
+
         // Draw custom leaf/petal shape (oval with tapered end)
         final path = Path();
         path.moveTo(0, -p.size / 2);
@@ -295,7 +295,20 @@ class _ParticlePainter extends CustomPainter {
         path.quadraticBezierTo(-p.size * 0.4, -p.size * 0.2, 0, -p.size / 2);
         path.close();
 
-        canvas.drawPath(path, paint);
+        // 3D volume gradient for petals
+        final petalPaint = Paint()
+          ..shader = RadialGradient(
+            center: const Alignment(-0.2, -0.2),
+            radius: 0.8,
+            colors: [
+              Colors.white.withValues(alpha: p.opacity * 0.8),
+              p.color.withValues(alpha: p.opacity.clamp(0.0, 1.0)),
+              p.color.withValues(alpha: (p.opacity * 0.6).clamp(0.0, 1.0)),
+            ],
+          ).createShader(path.getBounds())
+          ..style = PaintingStyle.fill;
+
+        canvas.drawPath(path, petalPaint);
       }
       canvas.restore();
     }

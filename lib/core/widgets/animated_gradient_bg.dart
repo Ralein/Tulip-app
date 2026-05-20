@@ -88,18 +88,43 @@ class _AnimatedGradientBgState extends State<AnimatedGradientBg>
     return AnimatedBuilder(
       animation: _animation,
       builder: (context, child) {
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 1500),
-          curve: Curves.easeInOut,
-          decoration: BoxDecoration(
-            gradient: RadialGradient(
-              center: Alignment(0.0, _animation.value - 0.1),
-              radius: 1.3,
-              colors: colors,
-              stops: const [0.0, 0.65, 1.0],
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            // Deep base linear gradient
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 1500),
+              curve: Curves.easeInOut,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topRight,
+                  end: Alignment.bottomLeft,
+                  colors: [
+                    colors[1],
+                    colors[2],
+                  ],
+                ),
+              ),
             ),
-          ),
-          child: widget.child,
+            // Floating, breathing radial glow (mesh effect)
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 1500),
+              curve: Curves.easeInOut,
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  center: Alignment(_animation.value * 0.8, _animation.value - 0.2),
+                  radius: 1.6,
+                  colors: [
+                    colors[0].withValues(alpha: 0.85),
+                    colors[1].withValues(alpha: 0.3),
+                    Colors.transparent,
+                  ],
+                  stops: const [0.0, 0.45, 1.0],
+                ),
+              ),
+            ),
+            if (widget.child != null) widget.child!,
+          ],
         );
       },
     );

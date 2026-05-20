@@ -15,12 +15,12 @@ void initPlatformWebBridge(void Function(String slotId) onMessage) {
 }
 
 void _postToIframesInNode(web.Node node) {
-  if (node is web.HTMLIFrameElement) {
-    node.contentWindow?.postMessage('reset-camera'.toJS, '*'.toJS);
+  if (node.isA<web.HTMLIFrameElement>()) {
+    (node as web.HTMLIFrameElement).contentWindow?.postMessage('reset-camera'.toJS, '*'.toJS);
   }
   
-  if (node is web.Element) {
-    final shadow = node.shadowRoot;
+  if (node.isA<web.Element>()) {
+    final shadow = (node as web.Element).shadowRoot;
     if (shadow != null) {
       final childNodes = shadow.childNodes;
       for (int i = 0; i < childNodes.length; i++) {
