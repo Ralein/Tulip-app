@@ -49,9 +49,9 @@ class _AnimatedGradientBgState extends State<AnimatedGradientBg>
           const Color(0xFF0C1318), // Dark Slate Border
         ],
       DayTime.afternoon => [
-          const Color(0xFF5A856A), // Radiant Forest Sunlight (Center)
-          const Color(0xFF22423A), // Lush Jungle Moss
-          const Color(0xFF0F1E19), // Deep Woodland Shadow
+          const Color(0xFFC85A46), // Warm Reddish-Terracotta Sunset Glow (Center)
+          const Color(0xFF4E201B), // Cozy Rich Mahogany
+          const Color(0xFF220D0A), // Warm Charcoal Shadows
         ],
       DayTime.evening => [
           const Color(0xFF8C3E61), // Burning Twilight Rose (Center)

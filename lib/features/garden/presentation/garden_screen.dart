@@ -14,6 +14,7 @@ import '../../../core/widgets/particle_system.dart';
 import '../../journal/presentation/providers/journal_provider.dart';
 import 'providers/garden_state_provider.dart';
 import 'widgets/breathing_dialog.dart';
+import 'widgets/fishbowl_dialog.dart';
 import 'widgets/streak_counter.dart';
 import 'widgets/weather_controller.dart';
 import 'helpers/web_bridge.dart';
@@ -29,6 +30,33 @@ class _GardenScreenState extends State<GardenScreen> {
   WebViewController? _webViewController;
   bool _isAtmosphereOpen = false;
 
+  final List<Map<String, String>> _hotspotsData = const [
+    {
+      'id': 'hotspot-1',
+      'title': 'Botany Table',
+      'description': 'The diary of an old botanist has been preserved here',
+      'orbit': '170deg 80deg 0.90m',
+      'target': '0.90 1.10 7.28',
+    },
+    {
+      'id': 'hotspot-2',
+      'title': 'Garden Logs',
+      'description': 'Browse your beautiful reflective journal logs here',
+      'orbit': '170deg 60deg 0.50m',
+      'target': '0.02 0.48 3.41',
+    },
+    {
+      'id': 'hotspot-3',
+      'title': 'Aqua Sanctuary',
+      'description': 'Interact with 3D fish and practice virtual gardening here',
+      'orbit': '370deg 55deg 0.70m',
+      'target': '-1.0 1.0 -2.0',
+    },
+  ];
+
+  int _activeHotspotIndex = -1;
+  String? _activeHotspotId;
+
   @override
   void initState() {
     super.initState();
@@ -39,6 +67,10 @@ class _GardenScreenState extends State<GardenScreen> {
 
   void _resetCamera() {
     resetCameraOnWeb();
+    setState(() {
+      _activeHotspotIndex = -1;
+      _activeHotspotId = null;
+    });
     _webViewController?.runJavaScript('''
       const viewer = document.querySelector('model-viewer');
       if (viewer) {
@@ -51,8 +83,17 @@ class _GardenScreenState extends State<GardenScreen> {
     ''');
   }
 
-  void _handleHotspotClick(String slotId) {
-    if (!mounted) return;
+  void _handleHotspotSelect(String slotId) {
+    final index = _hotspotsData.indexWhere((h) => h['id'] == slotId);
+    if (index != -1) {
+      setState(() {
+        _activeHotspotIndex = index;
+        _activeHotspotId = slotId;
+      });
+    }
+  }
+
+  void _launchHotspotAction(String slotId) {
     switch (slotId) {
       case 'hotspot-1':
         context.go('/editor');
@@ -61,7 +102,7 @@ class _GardenScreenState extends State<GardenScreen> {
         context.go('/entries');
         break;
       case 'hotspot-3':
-        _showBreathingModal();
+        _showFishbowlModal();
         break;
       case 'hotspot-4':
         _showBreathingModal();
@@ -71,6 +112,44 @@ class _GardenScreenState extends State<GardenScreen> {
         context.go('/memory-garden');
         break;
     }
+  }
+
+  void _handleHotspotClick(String slotId) {
+    if (!mounted) return;
+    _handleHotspotSelect(slotId);
+    _launchHotspotAction(slotId);
+  }
+
+  void _selectHotspotFromSlider(int index) {
+    if (index < 0 || index >= _hotspotsData.length) return;
+    final hotspot = _hotspotsData[index];
+    final slotId = hotspot['id']!;
+    setState(() {
+      _activeHotspotIndex = index;
+      _activeHotspotId = slotId;
+    });
+
+    _webViewController?.runJavaScript('''
+      const viewer = document.querySelector('model-viewer');
+      if (viewer) {
+        document.querySelectorAll('.hotspot-btn').forEach(b => b.classList.remove('active'));
+        const activeBtn = document.querySelector('[slot="$slotId"]');
+        if (activeBtn) activeBtn.classList.add('active');
+
+        viewer.setAttribute('interpolation-decay', '250');
+        viewer.autoRotate = false;
+        viewer.cameraOrbit = "${hotspot['orbit']}";
+        viewer.cameraTarget = "${hotspot['target']}";
+      }
+    ''');
+  }
+
+  void _showFishbowlModal() {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.4),
+      builder: (context) => const FishbowlDialog(),
+    );
   }
 
   void _showBreathingModal() {
@@ -167,6 +246,12 @@ class _GardenScreenState extends State<GardenScreen> {
                           _handleHotspotClick(message.message);
                         },
                       ),
+                      JavascriptChannel(
+                        'HotspotSelectChannel',
+                        onMessageReceived: (message) {
+                          _handleHotspotSelect(message.message);
+                        },
+                      ),
                     },
                     onWebViewCreated: (controller) {
                       _webViewController = controller;
@@ -219,31 +304,39 @@ class _GardenScreenState extends State<GardenScreen> {
                           }
 
                           const activeBtn = document.querySelector('[slot=\\'' + slotId + '\\']');
-                          if (activeBtn && activeBtn.classList.contains('active')) {
+                          const isAlreadyActive = activeBtn && activeBtn.classList.contains('active');
+
+                          document.querySelectorAll('.hotspot-btn').forEach(b => b.classList.remove('active'));
+                          if (activeBtn) activeBtn.classList.add('active');
+
+                          // ── Camera targets (snappy & zoomed in closer for premium feel) ────────
+                          const cameraTargets = {
+                            'hotspot-1': { orbit: '170deg 80deg 0.90m', target: '0.90 1.10 7.28' }, 
+                            'hotspot-2': { orbit: '170deg 60deg 0.50m', target: '0.02 0.48 3.41' }, // Tilted down
+                            'hotspot-3': { orbit: '370deg 55deg 0.70m', target: '-1.0 1.0 -2.0' }  // Panned significantly left to center the pond
+                          };
+
+                          const target = cameraTargets[slotId];
+                          if (target) {
+                            viewer.setAttribute('interpolation-decay', '250');
+                            viewer.autoRotate = false;
+                            viewer.cameraOrbit = target.orbit;
+                            viewer.cameraTarget = target.target;
+                          }
+
+                          // Notify Flutter of selection
+                          if (typeof HotspotSelectChannel !== 'undefined') {
+                            HotspotSelectChannel.postMessage(slotId);
+                          } else {
+                            window.parent.postMessage(slotId, '*');
+                          }
+
+                          if (isAlreadyActive) {
                             // 2nd click: Interact!
                             if (typeof HotspotChannel !== 'undefined') {
                               HotspotChannel.postMessage(slotId);
                             } else {
                               window.parent.postMessage(slotId, '*');
-                            }
-                          } else {
-                            // 1st click: Zoom to the button
-                            document.querySelectorAll('.hotspot-btn').forEach(b => b.classList.remove('active'));
-                            if (activeBtn) activeBtn.classList.add('active');
-
-                            // ── Camera targets (snappy & zoomed in closer for premium feel) ────────
-                            const cameraTargets = {
-                              'hotspot-1': { orbit: '170deg 80deg 0.90m', target: '0.90 1.10 7.28' }, 
-                              'hotspot-2': { orbit: '170deg 60deg 0.50m', target: '0.02 0.48 3.41' }, // Tilted down
-                              'hotspot-3': { orbit: '370deg 55deg 0.70m', target: '-1.0 1.0 -2.0' }  // Panned significantly left to center the pond
-                            };
-
-                            const target = cameraTargets[slotId];
-                            if (target) {
-                              viewer.setAttribute('interpolation-decay', '250');
-                              viewer.autoRotate = false;
-                              viewer.cameraOrbit = target.orbit;
-                              viewer.cameraTarget = target.target;
                             }
                           }
                         };
@@ -269,54 +362,45 @@ class _GardenScreenState extends State<GardenScreen> {
                       <style type="text/tailwindcss">
                         @layer components {
                           .hotspot-btn {
-                            @apply relative bg-[rgba(180,180,180,0.18)] text-[rgba(255,255,255,0.8)] border-[1.5px] border-[rgba(255,255,255,0.2)] rounded-full w-10 h-10 font-sans font-bold text-sm cursor-pointer flex items-center justify-center p-0 transition-all duration-[400ms] ease-[cubic-bezier(0.34,1.56,0.64,1)] backdrop-blur-md group shadow-[0_4px_12px_rgba(0,0,0,0.1),inset_0_1px_3px_rgba(255,255,255,0.3)];
+                            @apply relative bg-[rgba(14,165,233,0.65)] text-white border border-[rgba(255,255,255,0.45)] rounded-full w-7 h-7 font-sans font-bold text-xs cursor-pointer flex items-center justify-center p-0 transition-all duration-[400ms] ease-[cubic-bezier(0.34,1.56,0.64,1)] backdrop-blur-sm shadow-[0_0_10px_rgba(56,189,248,0.4)];
                             transform-style: preserve-3d;
                           }
 
                           .hotspot-btn::after {
-                            @apply content-[''] absolute -top-[6px] -left-[6px] -right-[6px] -bottom-[6px] border-[2px] border-[rgba(255,255,255,0.25)] rounded-full opacity-0 pointer-events-none animate-pulse-ring;
+                            @apply content-[''] absolute -top-[4px] -left-[4px] -right-[4px] -bottom-[4px] border border-[rgba(56,189,248,0.4)] rounded-full opacity-0 pointer-events-none animate-pulse-ring;
                           }
 
                           .hotspot-btn:hover {
-                            @apply bg-[rgba(255,255,255,0.3)] text-white border-[rgba(255,255,255,0.5)] shadow-[0_8px_20px_rgba(0,0,0,0.15),0_0_20px_rgba(255,255,255,0.2),inset_0_1px_4px_rgba(255,255,255,0.5)];
-                            transform: perspective(400px) scale(1.15) rotateX(12deg) rotateY(-8deg);
+                            @apply bg-[rgba(14,165,233,0.9)] text-white border-white shadow-[0_0_15px_rgba(56,189,248,0.7)];
+                            transform: scale(1.15);
                           }
 
                           .hotspot-btn:active {
-                            @apply bg-[rgba(255,255,255,0.45)] shadow-[0_2px_8px_rgba(0,0,0,0.2),inset_0_2px_6px_rgba(0,0,0,0.1)];
-                            transform: perspective(400px) scale(1.05) rotateX(18deg) rotateY(-12deg) translateZ(-5px);
+                            @apply bg-[rgba(14,165,233,0.95)] shadow-[0_2px_8px_rgba(0,0,0,0.2)];
+                            transform: scale(1.05);
                             transition-duration: 150ms;
                           }
 
                           .hotspot-btn.active {
-                            @apply bg-[rgba(255,255,255,0.4)] border-[rgba(255,255,255,0.6)] shadow-[0_0_30px_rgba(255,255,255,0.25),inset_0_0_10px_rgba(255,255,255,0.3)];
-                            transform: perspective(400px) scale(1.1) rotateX(5deg) rotateY(-5deg);
-                          }
-
-                          .hotspot-label {
-                            @apply absolute left-[50px] bg-[rgba(15,15,20,0.85)] text-[rgba(245,245,245,0.95)] py-1.5 px-3.5 rounded-[12px] text-xs font-semibold tracking-[0.5px] whitespace-nowrap pointer-events-none border border-[rgba(255,255,255,0.15)] shadow-[0_8px_30px_rgba(0,0,0,0.4)] backdrop-blur-md opacity-0 -translate-x-2 transition-all duration-[400ms] ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:opacity-100 group-hover:translate-x-0;
-                            transform-origin: left center;
-                          }
-                          
-                          .hotspot-btn:hover .hotspot-label {
-                            transform: perspective(400px) rotateY(5deg);
+                            @apply bg-[rgba(14,165,233,0.85)] border-white shadow-[0_0_20px_rgba(56,189,248,0.8)];
+                            transform: scale(1.1);
                           }
                         }
                       </style>
 
-                      <!-- Hotspot 1 · Write Sprout — Botany Table (desk inside greenhouse) -->
+                      <!-- Hotspot 1 · Botany Table -->
                       <button slot="hotspot-1" data-position="0.78 1.01 7.28" data-normal="0 1 0" class="hotspot-btn" onclick="zoomToHotspot('hotspot-1')">
-                        1<span class="hotspot-label"><svg class="w-3.5 h-3.5 inline-block mr-1.5 align-text-bottom text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Write Sprout</span>
+                        1
                       </button>
 
-                      <!-- Hotspot 2 · Garden Logs — Pond area -->
+                      <!-- Hotspot 2 · Garden Logs -->
                       <button slot="hotspot-2" data-position="0.02 0.48 3.41" data-normal="0 1 0" class="hotspot-btn" onclick="zoomToHotspot('hotspot-2')">
-                        2<span class="hotspot-label"><svg class="w-3.5 h-3.5 inline-block mr-1.5 align-text-bottom text-purple-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>Garden Logs</span>
+                        2
                       </button>
 
-                      <!-- Hotspot 3 · Koi Pond -->
+                      <!-- Hotspot 3 · Aqua Sanctuary -->
                       <button slot="hotspot-3" data-position="0.0 1.0 -2.0" data-normal="0 1 0" class="hotspot-btn" onclick="zoomToHotspot('hotspot-3')">
-                        3<span class="hotspot-label"><svg class="w-3.5 h-3.5 inline-block mr-1.5 align-text-bottom text-sky-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a7 7 0 0 0 7-7c0-4.3-7-11-7-11S5 10.7 5 15a7 7 0 0 0 7 7z"/></svg>Koi Pond</span>
+                        3
                       </button>
                     ''',
                   ),
@@ -439,36 +523,140 @@ class _GardenScreenState extends State<GardenScreen> {
                 ),
               ),
 
-              // 5. Bottom instruction bar
+              // 5. Floating Native Description Tooltip Box
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 450),
+                curve: Curves.easeOutBack,
+                bottom: _activeHotspotIndex != -1 ? 96.0 : 48.0,
+                left: AppDimensions.space24,
+                right: AppDimensions.space24,
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 300),
+                  opacity: _activeHotspotIndex != -1 ? 1.0 : 0.0,
+                  child: _activeHotspotIndex != -1
+                      ? Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 340),
+                            child: InkWell(
+                              onTap: () => _launchHotspotAction(_activeHotspotId!),
+                              borderRadius: BorderRadius.circular(AppDimensions.radius24),
+                              child: GlassmorphicCard(
+                                borderRadius: AppDimensions.radius24,
+                                padding: const EdgeInsets.all(AppDimensions.space16),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          _hotspotsData[_activeHotspotIndex]['title']!,
+                                          style: AppTypography.journalSubTitle(isDark: isDark).copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        Icon(
+                                          Icons.arrow_forward_rounded,
+                                          size: 16,
+                                          color: AppColors.skyBlue,
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      _hotspotsData[_activeHotspotIndex]['description']!,
+                                      style: AppTypography.bodySmall(isDark: isDark).copyWith(
+                                        color: Colors.white70,
+                                        height: 1.3,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        )
+                      : const SizedBox.shrink(),
+                ),
+              ),
+
+              // 6. Bottom Glassmorphic Hotspot Switcher Slider Pill
               Positioned(
-                bottom: AppDimensions.space24,
-                left: AppDimensions.space32,
-                right: AppDimensions.space32,
-                child: IgnorePointer(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 10,
-                      horizontal: 16,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.black38,
-                      borderRadius: BorderRadius.circular(
-                        AppDimensions.radiusFull,
+                bottom: 24.0,
+                left: AppDimensions.space24,
+                right: AppDimensions.space24,
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 320),
+                    child: GlassmorphicCard(
+                      borderRadius: AppDimensions.radiusFull,
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          // Left Cycle button
+                          IconButton(
+                            onPressed: () {
+                              final newIndex = _activeHotspotIndex == -1
+                                  ? 2
+                                  : (_activeHotspotIndex - 1 + _hotspotsData.length) % _hotspotsData.length;
+                              _selectHotspotFromSlider(newIndex);
+                            },
+                            icon: const Icon(Icons.chevron_left_rounded, color: Colors.white),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
+
+                          // Interactive center label
+                          Expanded(
+                            child: InkWell(
+                              onTap: () {
+                                if (_activeHotspotIndex != -1) {
+                                  _launchHotspotAction(_activeHotspotId!);
+                                } else {
+                                  _selectHotspotFromSlider(0);
+                                }
+                              },
+                              borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                child: Text(
+                                  _activeHotspotIndex != -1
+                                      ? _hotspotsData[_activeHotspotIndex]['title']!
+                                      : 'Explore Sanctuary',
+                                  textAlign: TextAlign.center,
+                                  style: AppTypography.bodyMedium(isDark: true).copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          // Right Cycle button
+                          IconButton(
+                            onPressed: () {
+                              final newIndex = _activeHotspotIndex == -1
+                                  ? 0
+                                  : (_activeHotspotIndex + 1) % _hotspotsData.length;
+                              _selectHotspotFromSlider(newIndex);
+                            },
+                            icon: const Icon(Icons.chevron_right_rounded, color: Colors.white),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
+                        ],
                       ),
-                      border: Border.all(color: Colors.white12, width: 1),
-                    ),
-                    child: Text(
-                      'Drag to rotate sanctuary • Pinch to zoom',
-                      textAlign: TextAlign.center,
-                      style: AppTypography.bodySmall(
-                        isDark: true,
-                      ).copyWith(fontSize: 12, color: Colors.white70),
                     ),
                   ),
                 ),
               ),
 
-              // 6. Sliding Atmosphere Controller Card
+              // 7. Sliding Atmosphere Controller Card
               AnimatedPositioned(
                 duration: const Duration(milliseconds: 500),
                 curve: Curves.easeOutBack,
