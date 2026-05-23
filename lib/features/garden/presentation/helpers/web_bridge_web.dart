@@ -1,4 +1,5 @@
 import 'dart:js_interop';
+import 'dart:js_interop_unsafe';
 import 'package:web/web.dart' as web;
 
 void initPlatformWebBridge(void Function(String slotId) onMessage) {
@@ -42,5 +43,18 @@ void _postToIframesInNode(web.Node node) {
 }
 
 void resetCameraOnWeb() {
-  _postToIframesInNode(web.document.body ?? web.document.documentElement!);
+  void send() {
+    // 1. Direct window frame dispatch (bypasses Shadow DOM boundaries cleanly)
+    for (int i = 0; i < web.window.length; i++) {
+      final frame = web.window.getProperty<JSObject?>(i.toJS) as web.Window?;
+      frame?.postMessage('reset-camera'.toJS, '*'.toJS);
+    }
+    // 2. DOM-traversal fallback for nested Shadow roots
+    _postToIframesInNode(web.document.body ?? web.document.documentElement!);
+  }
+
+  send();
+  // Multi-dispatch debounced retries to guarantee delivery during viewport adjustments
+  web.window.setTimeout(send.toJS, 50.toJS);
+  web.window.setTimeout(send.toJS, 150.toJS);
 }

@@ -15,6 +15,7 @@ import '../../journal/presentation/providers/journal_provider.dart';
 import 'providers/garden_state_provider.dart';
 import 'widgets/breathing_dialog.dart';
 import 'widgets/streak_counter.dart';
+import 'widgets/weather_controller.dart';
 import 'helpers/web_bridge.dart';
 
 class GardenScreen extends StatefulWidget {
@@ -26,6 +27,7 @@ class GardenScreen extends StatefulWidget {
 
 class _GardenScreenState extends State<GardenScreen> {
   WebViewController? _webViewController;
+  bool _isAtmosphereOpen = false;
 
   @override
   void initState() {
@@ -101,8 +103,9 @@ class _GardenScreenState extends State<GardenScreen> {
     final todayDate = DateTime(today.year, today.month, today.day);
 
     // Streak must include today or yesterday to be active
-    if (days.first.isBefore(todayDate.subtract(const Duration(days: 1))))
+    if (days.first.isBefore(todayDate.subtract(const Duration(days: 1)))) {
       return 0;
+    }
 
     int streak = 1;
     for (int i = 0; i < days.length - 1; i++) {
@@ -230,7 +233,7 @@ class _GardenScreenState extends State<GardenScreen> {
 
                             // ── Camera targets (snappy & zoomed in closer for premium feel) ────────
                             const cameraTargets = {
-                              'hotspot-1': { orbit: '170deg 80deg 1.20m', target: '-15.00 2.20 2.28' }, 
+                              'hotspot-1': { orbit: '170deg 80deg 0.90m', target: '0.90 1.10 7.28' }, 
                               'hotspot-2': { orbit: '170deg 60deg 0.50m', target: '0.02 0.48 3.41' }, // Tilted down
                               'hotspot-3': { orbit: '370deg 55deg 0.70m', target: '-1.0 1.0 -2.0' }  // Panned significantly left to center the pond
                             };
@@ -303,17 +306,17 @@ class _GardenScreenState extends State<GardenScreen> {
 
                       <!-- Hotspot 1 · Write Sprout — Botany Table (desk inside greenhouse) -->
                       <button slot="hotspot-1" data-position="0.78 1.01 7.28" data-normal="0 1 0" class="hotspot-btn" onclick="zoomToHotspot('hotspot-1')">
-                        1<span class="hotspot-label">✏️ Write Sprout</span>
+                        1<span class="hotspot-label"><svg class="w-3.5 h-3.5 inline-block mr-1.5 align-text-bottom text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Write Sprout</span>
                       </button>
 
                       <!-- Hotspot 2 · Garden Logs — Pond area -->
                       <button slot="hotspot-2" data-position="0.02 0.48 3.41" data-normal="0 1 0" class="hotspot-btn" onclick="zoomToHotspot('hotspot-2')">
-                        2<span class="hotspot-label">📓 Garden Logs</span>
+                        2<span class="hotspot-label"><svg class="w-3.5 h-3.5 inline-block mr-1.5 align-text-bottom text-purple-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>Garden Logs</span>
                       </button>
 
                       <!-- Hotspot 3 · Koi Pond -->
                       <button slot="hotspot-3" data-position="0.0 1.0 -2.0" data-normal="0 1 0" class="hotspot-btn" onclick="zoomToHotspot('hotspot-3')">
-                        3<span class="hotspot-label">Koi Pond</span>
+                        3<span class="hotspot-label"><svg class="w-3.5 h-3.5 inline-block mr-1.5 align-text-bottom text-sky-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a7 7 0 0 0 7-7c0-4.3-7-11-7-11S5 10.7 5 15a7 7 0 0 0 7 7z"/></svg>Koi Pond</span>
                       </button>
                     ''',
                   ),
@@ -387,6 +390,30 @@ class _GardenScreenState extends State<GardenScreen> {
                           ),
                         ),
                         const SizedBox(width: AppDimensions.space8),
+                        // Atmosphere/Weather button
+                        InkWell(
+                          onTap: () {
+                            setState(() {
+                              _isAtmosphereOpen = !_isAtmosphereOpen;
+                            });
+                          },
+                          borderRadius: BorderRadius.circular(
+                            AppDimensions.radiusFull,
+                          ),
+                          child: GlassmorphicCard(
+                            padding: const EdgeInsets.all(
+                              AppDimensions.space12,
+                            ),
+                            child: Icon(
+                              _isAtmosphereOpen ? Icons.wb_cloudy_rounded : Icons.cloud_outlined,
+                              color: isDark
+                                  ? Colors.white
+                                  : AppColors.tulipPinkDark,
+                              size: 20,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: AppDimensions.space8),
                         // View logs button
                         InkWell(
                           onTap: () => context.go('/entries'),
@@ -439,6 +466,23 @@ class _GardenScreenState extends State<GardenScreen> {
                     ),
                   ),
                 ),
+              ),
+
+              // 6. Sliding Atmosphere Controller Card
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 500),
+                curve: Curves.easeOutBack,
+                top: _isAtmosphereOpen
+                    ? MediaQuery.of(context).padding.top + 70.0
+                    : -320.0, // Hidden off-screen above
+                right: AppDimensions.space16,
+                left: MediaQuery.of(context).size.width > 360
+                    ? null
+                    : AppDimensions.space16,
+                width: MediaQuery.of(context).size.width > 360
+                    ? 320
+                    : null,
+                child: const WeatherController(),
               ),
             ],
           ),
